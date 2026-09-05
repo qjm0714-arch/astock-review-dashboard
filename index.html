@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A股每日复盘工作台 2.0</title>
+<style>
+/* ============== 设计 Token ============== */
+:root{
+  --ink:#1a2f5a; --blue:#1a3a6e; --blue2:#2b6fd4; --blue-soft:#eaf1fb;
+  --up:#d93026; --down:#0a8f4e; --flat:#8a94a6;
+  --bg:#eef1f6; --card:#ffffff; --line:#d8e1ee; --line2:#e7edf6;
+  --gold:#b0812e; --amber:#e08a1e; --amber-bg:#fdf6ea; --amber-line:#ecd9b6;
+  --teal:#1f7a8c; --ink2:#46566f; --ink3:#7a869c;
+  --shadow:0 1px 2px rgba(26,47,90,.05);
+  --mono:"Bahnschrift","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Microsoft YaHei UI","PingFang SC","Noto Sans SC",system-ui,sans-serif;
+  background:var(--bg);color:#23304a;font-size:14px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.num,t-nums{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+button{font-family:inherit;cursor:pointer}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#c3cddd;border-radius:6px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ============== 顶栏 ============== */
+.topbar{position:sticky;top:0;z-index:100;background:linear-gradient(100deg,#16294f 0%,#1a3a6e 55%,#224d8f 100%);
+  color:#fff;box-shadow:0 2px 10px rgba(20,40,80,.25)}
+.topbar-in{max-width:1500px;margin:0 auto;padding:10px 22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{font-size:18px;font-weight:700;letter-spacing:.5px}
+.brand .sub{font-size:12px;color:#a9c0e6}
+.top-controls{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}
+.date-select{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);color:#fff;
+  padding:6px 10px;border-radius:6px;font-size:13px;outline:none}
+.date-select option{color:#1a2f5a}
+.btn{border:none;border-radius:6px;padding:7px 14px;font-size:13px;font-weight:600;transition:.15s}
+.btn-gold{background:linear-gradient(180deg,#d4a54c,#b0812e);color:#fff}
+.btn-gold:hover{filter:brightness(1.08)}
+.btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3)}
+.btn-ghost:hover{background:rgba(255,255,255,.22)}
+.btn.on{background:#fff;color:#1a3a6e}
+.src-state{font-size:11.5px;color:#a9c0e6;display:flex;gap:8px;align-items:center}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+.dot.g{background:#5fd08a}.dot.a{background:#f0b34e}.dot.r{background:#f07a6e}
+
+/* ============== 2.0 页签导航 ============== */
+.tabbar{position:sticky;top:50px;z-index:90;background:#fff;border-bottom:1px solid var(--line);
+  box-shadow:0 1px 4px rgba(26,47,90,.05)}
+.tabbar-in{max-width:1500px;margin:0 auto;padding:0 16px;display:flex;gap:2px;overflow-x:auto}
+.tabbar-in::-webkit-scrollbar{height:6px}
+.tab-btn2{border:none;background:transparent;padding:11px 13px;font-size:13.5px;color:var(--ink2);
+  white-space:nowrap;border-bottom:2.5px solid transparent;font-weight:600;display:flex;align-items:center;gap:6px}
+.tab-btn2 .tn{font-family:var(--mono);font-size:10.5px;color:var(--ink3);border:1px solid var(--line);
+  border-radius:4px;padding:0 4px;line-height:16px}
+.tab-btn2.on{color:var(--blue);border-bottom-color:var(--blue2)}
+.tab-btn2.on .tn{color:#fff;background:var(--blue2);border-color:var(--blue2)}
+.tab-btn2:hover{color:var(--blue)}
+
+/* ============== 布局 ============== */
+.wrap{max-width:1500px;margin:0 auto;padding:18px 22px 60px}
+.page{display:none}.page.active{display:block;animation:pgfade .18s ease}
+@keyframes pgfade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.main{min-width:0;display:flex;flex-direction:column;gap:16px}
+
+/* ============== 卡片/章节 ============== */
+.section{background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);overflow:hidden}
+.sec-head{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line2);
+  background:linear-gradient(180deg,#fbfcfe,#f5f8fd)}
+.sec-no{font-family:var(--mono);font-size:12px;font-weight:700;color:#fff;background:var(--blue);
+  border-radius:5px;padding:2px 8px;letter-spacing:.5px}
+.sec-head h2{font-size:15.5px;color:var(--ink);font-weight:700}
+.sec-head .tag{font-size:11.5px;color:var(--ink3);margin-left:auto}
+.sec-body{padding:16px 18px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.g-side{grid-template-columns:1.35fr 1fr}
+@media(max-width:900px){.g-side{grid-template-columns:1fr}}
+.panel{border:1px solid var(--line2);border-radius:8px;padding:12px 14px;background:#fcfdfe}
+.panel h3{font-size:13px;color:var(--ink);margin-bottom:8px;display:flex;align-items:center;gap:8px;font-weight:700;flex-wrap:wrap}
+.panel h3::before{content:"";width:3px;height:13px;background:var(--blue2);border-radius:2px}
+.note-src{font-size:11px;color:var(--ink3);margin-top:8px;line-height:1.5}
+
+/* ============== KPI ============== */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.home-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px}
+.kpi{border:1px solid var(--line);border-radius:8px;padding:10px 13px;background:#fcfdfe;position:relative}
+.kpi .lab{font-size:11.5px;color:var(--ink3)}
+.kpi .val{font-family:var(--mono);font-size:22px;font-weight:700;margin-top:2px;color:var(--ink)}
+.kpi .sub{font-family:var(--mono);font-size:12px;margin-top:1px}
+.bigkpi{border:1px solid var(--line);border-radius:10px;padding:13px 15px;background:linear-gradient(180deg,#fcfdfe,#f6f9fd)}
+.bigkpi .lab{font-size:12px;color:var(--ink3)}
+.bigkpi .val{font-family:var(--mono);font-size:26px;font-weight:700;margin-top:3px;color:var(--ink);line-height:1.15}
+.bigkpi .sub{font-size:12px;margin-top:3px;color:var(--ink2)}
+.up{color:var(--up)!important}.down{color:var(--down)!important}.flat{color:var(--flat)!important}
+
+/* ============== 表格 ============== */
+table{width:100%;border-collapse:collapse;font-size:12.8px}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line2);border-radius:8px}
+table th{background:#eef3fb;color:var(--ink);font-weight:600;padding:7px 10px;text-align:left;white-space:nowrap}
+table td{padding:6px 10px;border-bottom:1px solid var(--line2);white-space:nowrap}
+table tbody tr:nth-child(even){background:#f8fafd}
+table tbody tr:hover{background:#eef4fc}
+td.r,th.r{text-align:right}
+.code{font-family:var(--mono);color:var(--ink3);font-size:11.5px}
+.tagchip{display:inline-block;font-size:11px;padding:1px 7px;border-radius:10px;font-weight:600}
+.chip-up{background:#fbe7e5;color:#c02b22}.chip-down{background:#e4f4ea;color:#0a7a43}
+.chip-gray{background:#eef1f6;color:#5d6b82}.chip-gold{background:#f6ecd8;color:#8a6420}
+.chip-blue{background:#e8f0fc;color:#1f5bb0}
+
+/* 徽章 */
+.badge{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 10px;border-radius:11px}
+.b-danger{background:#fbe7e5;color:#c02b22;border:1px solid #f0c9c5}
+.b-warn{background:#fdf3e3;color:#b06b12;border:1px solid #f0ddb8}
+.b-ok{background:#e4f4ea;color:#0a7a43;border:1px solid #c4e6d2}
+.b-info{background:#e8f0fc;color:#1f5bb0;border:1px solid #c9dcf5}
+.b-neutral{background:#eef1f6;color:#56637a;border:1px solid #dbe1ea}
+
+/* 人工编辑区 */
+.manual{border:1px dashed var(--amber-line);background:var(--amber-bg);border-radius:8px;padding:11px 14px;position:relative}
+.manual .mlab{position:absolute;top:-9px;left:10px;background:var(--amber);color:#fff;font-size:10.5px;
+  padding:0 8px;border-radius:8px;font-weight:700;letter-spacing:.5px}
+.manual p,.manual li{font-size:13px}
+body.review .manual{background:#fff;border-style:solid;border-color:var(--amber)}
+body.review [contenteditable]{outline:1.5px solid #e8c489;border-radius:4px;padding:2px 4px;background:#fffefa}
+[contenteditable]{min-height:20px;transition:.1s}
+.placeholder-empty{color:#b0895f;font-style:italic;font-size:12.5px}
+.edit-hint{display:none;font-size:11px;color:var(--amber);margin-top:6px}
+body.review .edit-hint{display:block}
+
+/* 图表 */
+.chart{width:100%;min-height:300px}
+.chart.sm{min-height:170px}
+.spark-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.spark-cell{border:1px solid var(--line2);border-radius:8px;padding:8px 10px 2px;background:#fcfdfe}
+.spark-cell .t{font-size:11.5px;color:var(--ink2);display:flex;justify-content:space-between}
+.spark-cell .v{font-family:var(--mono);font-weight:700;font-size:14px}
+
+/* 连板梯队 */
+.ladder-row{display:flex;align-items:stretch;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line2)}
+.ladder-row:last-child{border-bottom:none}
+.lb-level{flex:0 0 64px;background:linear-gradient(180deg,#1a3a6e,#2b5aa0);color:#fff;border-radius:7px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 0}
+.lb-level .b{font-family:var(--mono);font-size:20px;font-weight:700;line-height:1}
+.lb-level .c{font-size:10.5px;color:#c3d6f2}
+.lb-stocks{display:flex;flex-wrap:wrap;gap:6px;align-content:center;flex:1}
+.lb-stock{border:1px solid var(--line);background:#f7f9fc;border-radius:6px;padding:3px 9px;font-size:12px;display:flex;gap:6px}
+.lb-stock .ind{color:var(--ink3);font-size:11px}
+
+/* 多空双栏 */
+.bullbear{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:820px){.bullbear{grid-template-columns:1fr}}
+.side-col{border-radius:8px;padding:12px 14px;border:1px solid}
+.side-col.bull{background:#fdf6f5;border-color:#f0d4d1}
+.side-col.bear{background:#f4faf6;border-color:#cfe8da}
+.side-col h4{font-size:13px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.side-col ul{padding-left:18px}.side-col li{font-size:12.8px;margin:4px 0;line-height:1.6}
+
+/* 结论带 */
+.verdict{background:linear-gradient(100deg,#16294f,#1f4078);color:#eef3fb;border-radius:9px;padding:14px 18px}
+.verdict h3{color:#fff;font-size:14px;margin-bottom:6px;display:flex;gap:8px;align-items:center}
+.verdict p{font-size:13.5px;line-height:1.8;color:#dce6f5}
+.kvline{display:flex;gap:8px;font-size:12.8px;padding:3px 0;flex-wrap:wrap}
+.kvline .k{color:var(--ink3);flex:0 0 84px}
+.kvline .v{flex:1;min-width:200px}
+ul.bul{padding-left:18px}ul.bul li{margin:3px 0;font-size:13px}
+.legend-inline{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--ink3);margin:6px 0}
+.selfcheck li{list-style:none;font-size:12.5px;padding:3px 0;display:flex;gap:8px;align-items:center}
+.muted{color:var(--ink3);font-size:12px}
+.footer{max-width:1500px;margin:0 auto;padding:0 22px 40px;color:var(--ink3);font-size:11.5px;line-height:1.8}
+.toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%);background:#1a2f5a;color:#fff;
+  padding:10px 22px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:999;box-shadow:0 6px 24px rgba(20,40,80,.3)}
+.toast.show{opacity:1}
+.modal-mask{position:fixed;inset:0;background:rgba(20,32,58,.45);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-mask.show{display:flex}
+.modal{background:#fff;border-radius:12px;width:min(720px,92vw);max-height:86vh;display:flex;flex-direction:column}
+.modal-head{padding:13px 20px;border-bottom:1px solid var(--line2);display:flex;align-items:center}
+.modal-head h3{font-size:15px;color:var(--ink)}
+.modal-head button{margin-left:auto;border:none;background:#eef1f6;border-radius:6px;padding:4px 12px}
+.modal-body{padding:16px 20px;overflow:auto}
+.modal-body textarea{width:100%;min-height:380px;border:1px solid var(--line);border-radius:8px;
+  padding:12px;font-family:Consolas,monospace;font-size:12.5px;line-height:1.7}
+.loading{padding:60px;text-align:center;color:var(--ink3)}
+.tab-btn{border:1px solid var(--line);background:#f4f7fb;color:var(--ink2);border-radius:6px;padding:4px 14px;font-size:12.5px}
+.tab-btn.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+.manual-cell{min-width:90px}
+/* 股票池 */
+.pool-add{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.pool-add input,.pool-add select{border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:13px;font-family:inherit}
+.pool-add input{min-width:120px}
+.mini-btn{border:1px solid var(--line);background:#f4f7fb;border-radius:6px;padding:5px 12px;font-size:12.5px;font-weight:600;color:var(--blue)}
+.mini-btn.del{color:#c02b22}
+.zone-pill{font-family:var(--mono);font-weight:700;padding:3px 12px;border-radius:14px;font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- ================= 顶栏 ================= -->
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <h1>A股每日复盘工作台 2.0</h1>
+      <span class="sub">数据自动更新 · 11页全维复盘 · 图表现场渲染 · 人工复核润色</span>
+    </div>
+    <div class="top-controls">
+      <span class="src-state" id="srcState"></span>
+      <select class="date-select" id="dateSelect" title="切换历史交易日"></select>
+      <button class="btn btn-ghost" id="loadFileBtn" title="手动选择 report JSON">导入JSON</button>
+      <input type="file" id="fileInput" accept=".json" style="display:none">
+      <button class="btn btn-ghost" id="reviewBtn">复核模式</button>
+      <button class="btn btn-gold" id="exportMdBtn">导出飞书MD</button>
+      <button class="btn btn-gold" id="exportTxtBtn">公众号纯文本</button>
+      <button class="btn btn-gold" id="exportHtmlBtn">精美HTML快照</button>
+    </div>
+  </div>
+</header>
+
+<!-- ================= 11页签 ================= -->
+<nav class="tabbar"><div class="tabbar-in" id="tabBar"></div></nav>
+
+<div class="wrap">
+  <main class="main">
+    <div class="loading" id="loading">正在加载数据，请确认已运行 update_daily.py 生成 data/latest.js ……</div>
+    <div id="content" style="display:none"></div>
+  </main>
+</div>
+
+<div class="footer" id="footer"></div>
+<div class="toast" id="toast"></div>
+<div class="modal-mask" id="modalMask">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modalTitle">导出内容（可全选复制）</h3><button id="modalCopy">复制</button><button id="modalClose" style="margin-left:8px">关闭</button></div>
+    <div class="modal-body"><textarea id="modalText"></textarea></div>
+  </div>
+</div>
+
+<!-- ECharts: 本地优先(离线可用), 失败则 jsDelivr 锁定版本+SRI 兜底 -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js" integrity="sha384-pPi0zxBAoDu6+JXW/C68UZLvBUUtU+7zonhif43rqj7pxsGyqyqzcian2Rj37Rss" crossorigin="anonymous"></script>
+<script src="app.js"></script>
+<script src="charts.js"></script>
+<script>
+window.DATES=["2026-09-04"];
+</script>
+<script src="latest.js"></script>
+</body>
+</html>
