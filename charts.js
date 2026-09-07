@@ -112,7 +112,7 @@ function drawAllCharts(){
       {name:"涨停数",type:"bar",yAxisIndex:1,data:es.map(x=>x.limit_up),itemStyle:{color:"#f0b6b0",opacity:.7},barWidth:10},
       {name:"最高板",type:"line",yAxisIndex:1,data:es.map(x=>x.highest),smooth:true,symbol:"diamond",symbolSize:7,lineStyle:{color:GOLD,width:1.8},itemStyle:{color:GOLD}}]});
   // 温度计雷达
-  const th=thermometerScores();const ls=Number(getNote("leader_score"))||0;
+  const th=thermometerScores();const ls=leaderScoreNum();
   makeChart("chart-thermo",{radar:{indicator:[{name:"涨停数量",max:20},{name:"连板高度",max:20},{name:"封板率",max:20},{name:"上涨占比",max:20},{name:"龙头健康",max:20}],
     radius:"66%",axisName:{color:"#46566f",fontSize:11},splitLine:{lineStyle:{color:"#e0e7f1"}},splitArea:{areaStyle:{color:["#fbfcfe","#f4f7fb"]}}},
     tooltip:{},series:[{type:"radar",data:[{value:[...th.vals,ls],name:"情绪温度",areaStyle:{color:BLUE,opacity:.18},lineStyle:{color:BLUE,width:2},itemStyle:{color:BLUE}}]}]});
