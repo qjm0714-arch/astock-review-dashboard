@@ -194,6 +194,56 @@ ul.bul{padding-left:18px}ul.bul li{margin:3px 0;font-size:13px}
 .mini-btn{border:1px solid var(--line);background:#f4f7fb;border-radius:6px;padding:5px 12px;font-size:12.5px;font-weight:600;color:var(--blue)}
 .mini-btn.del{color:#c02b22}
 .zone-pill{font-family:var(--mono);font-weight:700;padding:3px 12px;border-radius:14px;font-size:13px}
+
+/* ============== 复盘观点·事件驱动卡片（2026-09-07 邱总要求） ============== */
+.ev-grid{display:flex;flex-direction:column;gap:14px;margin-top:4px}
+.ev-card{border:1px solid var(--line);border-left-width:5px;border-radius:10px;background:#fff;
+  padding:14px 18px 12px;box-shadow:0 1px 3px rgba(26,47,90,.05)}
+.ev-card.ev-good{border-left-color:#d93026;background:linear-gradient(0deg,#fff,#fffaf9)}
+.ev-card.ev-bad{border-left-color:#0a8f4e;background:linear-gradient(0deg,#fff,#f8fdfa)}
+.ev-card.ev-mid{border-left-color:#2b6fd4;background:linear-gradient(0deg,#fff,#f9fbff)}
+.ev-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:9px;border-bottom:1px dashed var(--line2)}
+.ev-date{font-family:var(--mono);font-size:11.5px;color:var(--ink3);background:#eef1f6;border-radius:5px;padding:1px 8px}
+.ev-tone{font-size:12px;font-weight:800;border-radius:11px;padding:2px 12px;letter-spacing:1px}
+.ev-tone.tone-good{background:#fbe7e5;color:#c02b22;border:1px solid #f0c9c5}
+.ev-tone.tone-bad{background:#e4f4ea;color:#0a7a43;border:1px solid #c4e6d2}
+.ev-tone.tone-mid{background:#e8f0fc;color:#1f5bb0;border:1px solid #c9dcf5}
+.ev-title{font-size:14.5px;font-weight:800;color:var(--ink);flex:1;min-width:200px;line-height:1.5}
+.ev-seg{display:flex;gap:11px;padding:5px 0;align-items:flex-start}
+.ev-lab{flex:0 0 66px;font-size:12px;font-weight:700;border-radius:6px;text-align:center;padding:2px 0;margin-top:2px;height:fit-content}
+.ev-lab.d{background:#eef3fb;color:#1a3a6e}
+.ev-lab.r{background:#fdeeea;color:#b05a12}
+.ev-lab.a{background:#f1ecfa;color:#5b3a9e}
+.ev-txt{flex:1;font-size:13.6px;line-height:1.85;color:#33405a;min-width:0}
+.ev-txt b{color:#1a3a6e}
+/* 复盘观点整体疏排版 */
+.rv-wrap{display:flex;flex-direction:column;gap:16px}
+.rv-wrap .manual .view-text{font-size:13.6px;line-height:1.9}
+.rv-wrap .manual{padding:14px 18px}
+/* ============== 我的股票池·三档人工推荐 ============== */
+.pick-panel{border-radius:10px}
+.pick-panel.pick-core{border-left:5px solid #d93026}
+.pick-panel.pick-flex{border-left:5px solid #d99018}
+.pick-panel.pick-avoid{border-left:5px solid #0a8f4e}
+.pick-panel h3{font-size:13.5px}
+.pick-row{display:flex;gap:12px;padding:7px 2px;border-bottom:1px dashed var(--line2);align-items:baseline;font-size:13px;line-height:1.7}
+.pick-row:last-child{border-bottom:none}
+.pick-nm{flex:0 0 auto;font-weight:800;color:var(--ink);white-space:nowrap}
+.pick-nm .code{font-family:var(--mono);color:var(--ink3);font-size:11px;margin-left:6px;font-weight:600}
+.pick-rs{flex:1;color:#3a4660;min-width:0}
+.pick-avoid .pick-nm{color:#0a7a43}
+/* ============== 龙虎榜全宽/大字号 ============== */
+.lhb-wide{padding:16px 20px}
+.lhb-wide h3{font-size:14.5px;margin-bottom:11px}
+.lhb-wide table{font-size:13.4px}
+.lhb-wide table th{padding:9px 11px}
+.lhb-wide table td{padding:9px 11px}
+/* ============== 可点击排序表头（类Excel） ============== */
+th.sort-th{cursor:pointer;user-select:none;white-space:nowrap}
+th.sort-th:hover{background:#e2eaf7}
+th.sort-th .sarr{font-size:10px;color:#9fb2d0;margin-left:3px}
+th.sort-th.active{background:#dbe6f8;color:#1a3a6e}
+th.sort-th.active .sarr{color:#1a3a6e}
 </style>
 </head>
 <body>
@@ -240,9 +290,12 @@ ul.bul{padding-left:18px}ul.bul li{margin:3px 0;font-size:13px}
 <!-- ECharts: 本地优先(离线可用), 失败则 jsDelivr 锁定版本+SRI 兜底 -->
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js" integrity="sha384-pPi0zxBAoDu6+JXW/C68UZLvBUUtU+7zonhif43rqj7pxsGyqyqzcian2Rj37Rss" crossorigin="anonymous"></script>
 <script src="app.js"></script>
+<script src="app2.js"></script>
+<script src="app3.js"></script>
+<script src="app4.js"></script>
 <script src="charts.js"></script>
 <script>
-window.DATES=["2026-09-07"];
+window.DATES=["2026-09-04","2026-09-07"];
 </script>
 <script src="latest.js"></script>
 <script src="patch1.js"></script>
