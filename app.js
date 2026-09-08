@@ -19,7 +19,7 @@ function copyText(t){navigator.clipboard.writeText(t).then(()=>toast("已复制�
 function badge(text,kind){return `<span class="badge b-${kind}">${esc(text)}</span>`}
 function crowdZone(v){if(v==null)return["--","neutral"];if(v>=50)return["极端拥挤","danger"];if(v>=45)return["极度危险","danger"];if(v>=40)return["危险抱团","warn"];if(v>=35)return["偏高","warn"];return["健康","ok"]}
 function fgZone(v){if(v==null)return["--","neutral"];if(v<25)return["极度恐惧","danger"];if(v<45)return["恐惧","warn"];if(v<=55)return["中性","neutral"];if(v<=75)return["贪婪","warn"];return["极度贪婪","danger"]}
-function emoZone(z){return ({高位:"danger",偏暖:"warn","中性震荡":"neutral",偏冷:"warn",冰点:"danger"})[z]||"neutral"}
+function emoZone(z){return ({高位:"danger",偏暖:"warn",中性震荡:"neutral",偏冷:"warn",冰点:"danger"})[z]||"neutral"}
 function techBadge(g){return ({极强:["极强","danger"],强:["强","info"],中性:["中性","neutral"],弱:["弱","warn"],极弱:["极弱","danger"]})[g]||[g,"neutral"]}
 function contTag(t){return ({连续净流入:["连续净流入","ok"],连续净流出:["连续净流出","danger"],流出转流入:["流出转流入","info"],流入转流出:["流入转流出","warn"]})[t]||[t,"neutral"]}
 
@@ -93,8 +93,9 @@ function renderHome(){
   const quad=(style.quadrants||[]).map(q=>`<div class="kpi"><div class="lab">${q.quad} · ${q.index}</div>
     <div class="val ${cls(q.chg)}" style="font-size:19px">${signed(q.chg)}%</div></div>`).join("");
   const bull=(R.notes?.bull||[]),bear=(R.notes?.bear||[]);
-  const listArr=(arr,ph)=>arr.length?`<ul>${arr.map(x=>`<li>${esc(typeof x==="object"?JSON.stringify(x):x)}</li>`).join("")}</ul>`
-    :`<div class="placeholder-empty">${ph}</div>`;
+  const logicArr=(arr,ph,tone)=>{const a=Array.isArray(arr)?arr:(arr?String(arr).split(/\n/).filter(s=>s.trim()):[]);
+    return a.length?`<ol class="logic-list ${tone}">${a.map((x,i)=>`<li data-n="${i+1}">${esc(typeof x==="object"?JSON.stringify(x):x)}</li>`).join("")}</ol>`
+    :`<div class="placeholder-empty">${ph}</div>`;};
   return `<div class="section"><div class="sec-body">
     <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px">
       <div style="flex:1;min-width:280px">
@@ -119,7 +120,7 @@ function renderHome(){
       ${bk("昨日涨停今日",zp.money_effect?f2(zp.money_effect.avg)+"%":"--",zp.money_effect?`中位${f2(zp.money_effect.median)}% · 再涨停${pct(zp.money_effect.limit_up_again_rate)}`:"需两日归档",zp.money_effect?cls(zp.money_effect.avg):"")}
     </div>
     <div class="manual" style="margin-top:14px" data-field="core_summary"><span class="mlab">人工 · 核心结论（AI每日复核润色）</span>
-      <div class="view-text" data-view="core_summary"></div></div>
+      <div class="view-text home-prose" data-view="core_summary"></div></div>
   </div></div>
 
   <div class="grid g2">
@@ -142,9 +143,9 @@ function renderHome(){
 
   <div class="bullbear">
     <div class="side-col bull"><h4 class="up">多头逻辑（复核填写，5-6条）</h4>
-      <div class="manual" data-field="bull" style="border:none;background:transparent;padding:0"><div class="view-text" data-view="bull">${listArr(bull,"待复核：开启复核模式，一行一条多头依据")}</div></div></div>
+      <div class="manual" data-field="bull" style="border:none;background:transparent;padding:0"><div class="view-text" data-view="bull" data-logic="tone-bull">${logicArr(bull,"待复核：开启复核模式，一行一条多头依据")}</div></div></div>
     <div class="side-col bear"><h4 class="down">空头/风险逻辑（复核填写，5-6条）</h4>
-      <div class="manual" data-field="bear" style="border:none;background:transparent;padding:0"><div class="view-text" data-view="bear">${listArr(bear,"待复核：开启复核模式，一行一条空头/风险依据")}</div></div></div>
+      <div class="manual" data-field="bear" style="border:none;background:transparent;padding:0"><div class="view-text" data-view="bear" data-logic="tone-bear">${logicArr(bear,"待复核：开启复核模式，一行一条空头/风险依据")}</div></div></div>
   </div>`}
 
 /* ============================================================
@@ -169,7 +170,7 @@ function renderGlobal(){
   const u2=bonds.US2Y?.yield,u10=bonds.US10Y?.yield,u30=bonds.US30Y?.yield;
   const inv102=(u10!=null&&u2!=null)?(u10-u2):null, inv3010=(u30!=null&&u10!=null)?(u30-u10):null;
   const sparkDefs=[["vix","VIX期货(近月,非现货)"],["us10y","美债10Y收益率%"],["us30y","美债30Y收益率%"],
-    ["gold","COMEX黄金"],["lme_cu","LME铜"],["dxy","美元指数"],["dram","DRAM现货(人工)"]];
+    ["gold","COMEX黄金"],["lme_cu","LME铜"],["dxy","美元指数"],["dram","DRAM现货(人工)"],["wti","WTI原油(美元/桶)"]];
   const sparks=sparkDefs.map(([k,t])=>`<div class="spark-cell"><div class="t"><span>${t}</span><span class="v" id="sv-${k}"></span></div><div class="chart sm" id="spark-${k}" style="height:120px;min-height:120px"></div></div>`).join("");
   return `<div class="grid g-side">
     <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
@@ -262,11 +263,12 @@ function renderMarket(){
    ============================================================ */
 function fmtFbt(v){if(v==null||v==="")return "--";const s=String(v).padStart(6,"0");return `${s.slice(0,2)}:${s.slice(2,4)}`}
 function ladderStockTable(items){
-  return `<div class="tbl-wrap"><table><thead><tr><th>代码</th><th>名称</th><th class="r">连板</th><th class="r">涨幅%</th>
-    <th class="r">收盘</th><th class="r">首次封板</th><th class="r">封单亿</th><th class="r">炸板次数</th><th class="r">成交亿</th><th class="r">换手%</th><th>行业</th></tr></thead><tbody>
-    ${items.map(it=>`<tr><td class="code">${it.code}</td><td><b>${esc(it.name)}</b></td><td class="r num up">${it.lb}板</td>
-    <td class="r num ${cls(it.chg)}">${signed(it.chg)}</td><td class="r num">${f2(it.price)}</td>
-    <td class="r num">${fmtFbt(it.first_seal)}</td><td class="r num">${yiWan(it.seal_yi)}</td>
-    <td class="r num ${(it.open_times||0)>0?"down":""}">${it.open_times||0}</td><td class="r num">${yiWan(it.amount_yi)}</td>
-    <td class="r num">${f2(it.turnover)}</td><td style="white-space:normal;color:var(--ink3);font-size:11.5px">${esc(it.industry||"")}</td></tr>`).join("")}
+  const H=(t,al)=>`<th class="${al||""} sort-th">${t}<span class="sarr">⇅</span></th>`;
+  return `<div class="tbl-wrap"><table><thead><tr>${H("代码")}${H("名称")}${H("连板","r")}${H("涨幅%","r")}
+    ${H("收盘","r")}${H("首次封板","r")}${H("封单亿","r")}${H("炸板次数","r")}${H("成交亿","r")}${H("换手%","r")}${H("行业")}</tr></thead><tbody>
+    ${items.map(it=>`<tr><td class="code" data-v="${it.code}">${it.code}</td><td data-v="${esc(it.name)}"><b>${esc(it.name)}</b></td><td class="r num up" data-v="${it.lb}">${it.lb}板</td>
+    <td class="r num ${cls(it.chg)}" data-v="${it.chg??""}">${signed(it.chg)}</td><td class="r num" data-v="${it.price??""}">${f2(it.price)}</td>
+    <td class="r num" data-v="${it.first_seal??""}">${fmtFbt(it.first_seal)}</td><td class="r num" data-v="${it.seal_yi??""}">${yiWan(it.seal_yi)}</td>
+    <td class="r num ${(it.open_times||0)>0?"down":""}" data-v="${it.open_times||0}">${it.open_times||0}</td><td class="r num" data-v="${it.amount_yi??""}">${yiWan(it.amount_yi)}</td>
+    <td class="r num" data-v="${it.turnover??""}">${f2(it.turnover)}</td><td style="white-space:normal;color:var(--ink3);font-size:11.5px" data-v="${esc(it.industry||"")}">${esc(it.industry||"")}</td></tr>`).join("")}
   </tbody></table></div>`}
