@@ -107,7 +107,7 @@ function renderFunds(){
   const contRows=cont.rows.slice().sort((a,b)=>(b.today_yi??0)-(a.today_yi??0)).map(x=>{const[t,k]=contTag(x.tag);return `<tr><td>${esc(x.name)}</td>
     <td class="r num ${cls(x.prev_yi)}">${signed(x.prev_yi)}</td><td class="r num ${cls(x.today_yi)}"><b>${signed(x.today_yi)}</b></td>
     <td class="r num ${cls(x.chg_yi)}">${signed(x.chg_yi)}</td><td>${badge(t,k)}</td></tr>`}).join("");
-  const fh=R.fund_hist||[];
+  const fh=(R.fund_hist||[]).slice(-10);
   return `<div class="kpi-strip">
     <div class="kpi"><div class="lab">全市场拥挤度（前5%成交占比）</div><div class="val">${f2(cr.ratio)}%</div><div class="sub">${badge(cz,ck)} 前${cr.topn}/${cr.total_n}只 · ${yiWan(cr.top5_yi)}/${yiWan(cr.total_yi)}亿</div></div>
     <div class="kpi"><div class="lab">TMT 成交额占比</div><div class="val">${f2(tmt.ratio)}%</div><div class="sub">${yiWan(tmt.amount_yi)}亿（电子+通信+计算机+传媒）</div></div>
@@ -128,8 +128,9 @@ function renderFunds(){
     ${contRows?`<div class="tbl-wrap"><table><thead><tr><th>行业</th><th class="r">前日主力净亿</th><th class="r">今日主力净亿</th><th class="r">变化</th><th class="r">连续性</th></tr></thead><tbody>${contRows}</tbody></table></div>`
       :'<div class="muted">连续性需连续两个交易日完整归档，明日自动生效。</div>'}
     <div class="note-src">按今日主力净额绝对值前12行业与前一交易日对比：连续净流入=两日皆正，流出转流入=今日转正（潜在新主线），反之为切换信号。</div></div>
-  <div class="panel" style="margin-top:14px"><h3>全市场主力资金净额序列（每日append，红正绿负）</h3>
-    ${fh.length>=2?`<div class="chart sm" id="chart-fundhist" style="height:240px;min-height:240px"></div>`:'<div class="muted">序列累积中（需≥2个交易日）</div>'}</div>
+  <div class="panel" style="margin-top:14px"><h3>全市场主力资金净额序列（近10个交易日·滚动，红正绿负；每日append并剔除最旧一日）</h3>
+    ${fh.length>=2?`<div class="chart sm" id="chart-fundhist" style="height:240px;min-height:240px"></div>`:'<div class="muted">序列累积中（需≥2个交易日）</div>'}
+    <div class="note-src">口径：当日为全A个股主力净额(超大单+大单,含北证)自算；历史日为东财沪深指数级主力净流入合计(与自算差&lt;0.6%)，滚动只保留最近10个交易日。</div></div>
   <div class="panel" style="margin-top:14px">
     <div style="display:flex;gap:8px;margin-bottom:10px"><h3 style="margin:0">个股主力资金 Top10</h3>
       <button class="tab-btn on" data-fundtab="in" style="margin-left:auto">净流入</button>
