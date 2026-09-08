@@ -111,26 +111,97 @@ function eventCardsBlock(){
     return `<div class="panel"><h3>当日核心事件 · 事件驱动卡片（利好/利空 · 事件数据 → 市场反应 → 评估）</h3><div class="ev-grid">${cs.map(renderEventCard).join("")}</div></div>`;
   return manualBlock("events","事件六要素（政策/产业/公司/海外/资金/监管，含来源与传导链）","结构化 events_cards（date/tone/title/data/reaction/assess）将自动渲染为统一卡片");
 }
+/* ---- 复盘观点3.0 结构化读取助手（数据来自 notes，空则回退人工块） ---- */
+function rvArr(field){const v=getNoteRaw(field);if(Array.isArray(v))return v.map(x=>String(x).trim()).filter(Boolean);if(typeof v==="string"&&v.trim())return v.split(/\n/).map(s=>s.trim()).filter(Boolean);return []}
+function rvTxt(field){const v=getNoteRaw(field);return Array.isArray(v)?v.join("\n"):(v==null?"":String(v))}
+function rvCard(no,title,sub,inner,cls){return `<section class="rv-card ${cls||""}"><div class="rv-head"><span class="rv-no">${no}</span><h3>${title}</h3>${sub?`<span class="rv-sub">${sub}</span>`:""}</div><div class="rv-body">${inner}</div></section>`}
+function rvTextField(field,no,title,sub,cls){const t=rvTxt(field).trim();return rvCard(no,title,sub,t?`<div class="rv-prose ${cls||""}">${esc(t)}</div>`:manualBlock(field,title,""),cls)}
+/* ② 论点论据（偏多/偏空） */
+function rvArgs(){
+  const bull=rvArr("bull"),bear=rvArr("bear");
+  if(!bull.length&&!bear.length)return `<div class="grid g2">${manualBlock("bull","偏多因素（一行一条）","")}${manualBlock("bear","偏空因素（一行一条）","")}</div>`;
+  const li=a=>a.map(x=>`<li>${esc(x.replace(/^[\s\-·•\d.、）)]+/,""))}</li>`).join("");
+  return `<div class="rv-args">
+    <div class="rv-side rv-bull"><h4>▲ 偏多论据（${bull.length}条）</h4><ul>${li(bull)}</ul></div>
+    <div class="rv-side rv-bear"><h4>▼ 偏空论据（${bear.length}条）</h4><ul>${li(bear)}</ul></div></div>`;
+}
+/* ③ 核心驱动事件：点击标题折叠/展开 */
+function rvEvents(){
+  const cs=getNoteRaw("events_cards");
+  if(!Array.isArray(cs)||!cs.length)return eventCardsBlock();
+  const tc=t=>/利[多好]|正面|偏多|回暖|上行/.test(t)?"good":/利[空]|负面|偏空|承压|下行/.test(t)?"bad":"mid";
+  return cs.map((e,i)=>{
+    const c=tc(String(e.tone||"中性"));
+    const seg=(lab,txt,k)=>txt?`<div class="rv-dseg"><span class="rv-dlab ${k}">${lab}</span><div class="rv-dtxt">${esc(String(txt))}</div></div>`:"";
+    return `<details class="rv-seat" ${i===0?"open":""}>
+      <summary><span class="ev-tone tone-${c}">${esc(e.tone||"中性")}</span><span class="rv-stitle">${i+1}. ${esc(e.title||"")}</span><span class="rv-arrow"></span></summary>
+      <div class="rv-drv">${seg("事件数据",e.data,"d")}${seg("市场反应",e.reaction,"r")}${seg("评估",e.assess,"a")}</div></details>`;
+  }).join("");
+}
+/* ④ 三情景：解析"基准（概率50%）：区间，描述"为表 */
+function rvScenarios(){
+  const arr=rvArr("scenarios");
+  if(!arr.length)return `<div class="grid g2">${manualBlock("scenarios","次日三情景（基准/乐观/谨慎：概率+区间+应对）","")}${manualBlock("falsify","证伪信号（出现即推翻判断+对应仓位动作）","")}`;
+  const rows=arr.map(s=>{
+    let m=s.match(/^(基准|乐观|谨慎|悲观|中性)[^（(：:]*[（(]?\s*概率?\s*(\d+\s*%)?\s*[)）]?\s*[:：]\s*([\s\S]*)$/);
+    let name,prob,rest;if(m){name=m[1];prob=m[2]||"--";rest=m[3].trim()}else{name="情景";prob="--";rest=s}
+    let rng="--",desc=rest;const rm=rest.match(/^([^，。；;]+)[，。；;]([\s\S]*)$/);
+    if(rm){rng=rm[1];desc=rm[2]}
+    return `<tr><td class="rv-scname">${esc(name)}</td><td class="rv-scprob">${esc(prob)}</td><td style="white-space:normal">${esc(rng)}</td><td style="white-space:normal">${esc(desc)}</td></tr>`;
+  }).join("");
+  const fal=rvArr("falsify");
+  const falBox=fal.length?`<div class="rv-cal" style="margin-top:0"><h4>⚑ 量化证伪信号（出现即降权/减仓）</h4><ul class="rv-blist">${fal.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:manualBlock("falsify","证伪信号","");
+  return `<div class="tbl-wrap"><table><thead><tr><th>情景</th><th>概率</th><th>指数区间/条件</th><th>推演与应对要点</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div style="margin-top:13px">${falBox}</div>`;
+}
+/* ⑥ 昨日候选池回溯（闭环） */
+function rvPoolReview(){
+  const cr=rvTxt("candidate_review").trim(),pr=rvTxt("pool_review").trim();
+  const t=cr||pr;if(!t)return manualBlock("pool_review","昨日候选池回溯（昨日点名个股今日实际表现，对错复盘）","");
+  return `<div class="rv-prose">${esc(t)}</div>${pr&&pr!==cr?`<div class="rv-prose" style="margin-top:10px">${esc(pr)}</div>`:""}`;
+}
+/* ⑦ 风险排除 */
+function rvExclude(){
+  const a=rvArr("pool_exclude");if(!a.length)return manualBlock("pool_exclude","今日风险排除（剔除/回避标的及原因，一行一条）","");
+  return `<div class="rv-risk">${a.map(x=>`<div class="rv-rk">${esc(x.replace(/^[-·•\s]+/,""))}</div>`).join("")}</div>`;
+}
+/* ⑧ 次日入池：解析"名称 代码｜理由｜计划"为表（含入选理由+交易计划） */
+function rvPoolNew(){
+  const a=rvArr("pool_new");if(!a.length)return manualBlock("pool_new","次日入池观察（每项：名称 代码｜入选理由｜交易计划）","仅研究观察，不构成买卖建议、不承诺收益");
+  const rows=a.map(s=>{
+    const parts=s.split(/[｜|]/).map(x=>x.trim()).filter(Boolean);
+    const code=(s.match(/\d{6}/)||[""])[0],isSec=!code;
+    let first=parts[0]||s;let name=first.replace(/\d{6}/g,"").replace(/[（()）]/g,"").replace(/^[-·•\s]+/,"").trim()||first;
+    let mid=parts.slice(1),plan="";
+    if(mid.length){const last=mid[mid.length-1];if(/观察|不追|回踩|止损|止盈|逢低|轻仓|等|破|分散|配套|不超|上限/.test(last)){plan=last;mid=mid.slice(0,-1)}}
+    let reason=mid.join("；")||(isSec?s:"");
+    return `<tr><td class="rv-code">${esc(code||"板块")}</td><td style="white-space:normal;font-weight:700;color:var(--ink)">${esc(name)}</td><td style="white-space:normal">${esc(reason)}</td><td style="white-space:normal">${esc(plan||"回踩/分歧日再评估，不追高")}</td></tr>`;
+  }).join("");
+  return `<div class="tbl-wrap"><table><thead><tr><th>代码</th><th>标的</th><th>入选理由</th><th>交易计划</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="note-src" style="margin-top:8px">仅为研究观察标的，不构成买卖建议、不承诺收益；仓位遵循「逢低轻仓/回踩观察、禁止大阳线追高」纪律。</div>`;
+}
+/* ⑩ 近期事件 + 未核实诚实披露 */
+function rvCalUnver(){
+  const cal=rvArr("events_calendar"),uv=rvArr("unverified");
+  const calBox=cal.length?`<ul class="rv-blist">${cal.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:'<span class="muted">待复核补充未来1-2周催化日历</span>';
+  const uvBox=uv.length?`<ul class="rv-blist">${uv.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:'<span class="muted">无未核实项（全部数据已双源核实）</span>';
+  return `<div class="grid g2">
+    <div class="rv-cal"><h4>📅 近期关键事件关注</h4>${calBox}</div>
+    <div class="rv-unverified"><h4>⚐ 未核实 / 口径差异诚实披露</h4>${uvBox}</div></div>`;
+}
 function renderReview(){
+  const nature=rvTxt("nature").trim();
   return `<div class="rv-wrap">
-    <div class="grid g2">
-      ${manualBlock("nature","市场定性（一句话：当前处于什么市场/什么阶段/总体仓位取向）","")}
-      ${manualBlock("style_note","风格判断（价值/成长、大盘/小盘、科技/红利，结合风格四象限与剪刀差）","")}
-    </div>
-    ${eventCardsBlock()}
-    ${manualBlock("drivers","核心驱动 4-6个（三段式：事件/数据 → 市场反应 → 评估与持续性，一行一个）","")}
-    ${manualBlock("industry_logic","题材深度归因（为什么涨/能不能持续/验证信号）","")}
-    <div class="grid g2">
-      ${manualBlock("scenarios","次日三情景（基准/乐观/悲观：概率+指数区间+应对要点，不写买卖价位）","")}
-      ${manualBlock("falsify","证伪信号（什么信号出现就推翻当前判断，并绑定对应仓位动作）","")}
-    </div>
-    <div class="grid g2">
-      ${manualBlock("events_calendar","未来1-2周催化日历（事件/日期/相关方向）","")}
-      ${manualBlock("dram_note","DRAM/存储现货与小金属（自动源缺失，人工补价格与解读）","")}
-    </div>
-    <div class="verdict"><h3>三重共振结论</h3>
-    <div class="manual" data-field="triple" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.3)"><div class="view-text" data-view="triple"></div></div>
-    <p style="margin-top:8px">技术面（三位一体60分）× 情绪面（情绪周期/涨停反馈）× 资金面（主力/龙虎榜/拥挤度）三方同向为共振，分歧时降权。候选池回溯 / 仓位风控 / 风险排除已统一移至「我的股票池」页。</p></div>
+    ${rvCard("①","市场定性 · 总论","结论先行（总）",nature?`<div class="rv-nature">${esc(nature)}</div>`:manualBlock("nature","市场定性（当前处于什么市场/阶段/总体仓位取向）",""))}
+    ${rvCard("②","论点论据 · 偏多 vs 偏空","多空因素逐条对照（分）",rvArgs())}
+    ${rvCard("③","核心驱动事件","点击标题展开 / 收起 · 事件数据 → 市场反应 → 评估",rvEvents())}
+    ${rvCard("④","次日三情景推演 + 量化证伪信号","基准/乐观/谨慎概率与区间",rvScenarios())}
+    ${rvCard("⑤","三重共振选股结论","技术面 × 情绪面 × 资金面",(()=>{const t=rvTxt("triple").trim();return t?`<div class="rv-triple">${esc(t)}</div>`:manualBlock("triple","三重共振结论","")})())}
+    ${rvCard("⑥","昨日候选池回溯（闭环）","验证昨日关注、迭代选股",rvPoolReview())}
+    ${rvCard("⑦","今日风险排除项","剔除/回避方向及原因",rvExclude())}
+    ${rvCard("⑧","次日入池观察 · 入选理由与交易计划","可荐股口径 · 仅研究观察",rvPoolNew())}
+    ${rvTextField("position","⑨","仓位与风控节奏","总仓位/单线上限/止损纪律","")}
+    ${rvCalUnver()}
   </div>`}
 
 /* ============================================================
@@ -179,10 +250,10 @@ function renderMyPool(){
         <td style="white-space:normal;min-width:220px">${esc(x.note||"")}</td>
         <td class="r"><button class="mini-btn del" data-pool-del="${pool.indexOf(x)}">删除</button></td></tr>`).join("")}
       </tbody></table></div>`:'<div class="muted">暂无</div>'}</div>`};
-  return `<div class="section"><div class="sec-head"><span class="sec-no">8A</span><h2>仓位风控与候选池闭环（自「复盘观点」迁入）</h2></div><div class="sec-body rv-wrap">
-    ${manualBlock("position","仓位与风控（总仓位区间/单线上限/止损纪律，研究框架、不构成投资建议）","")}
-    ${manualBlock("pool_review","昨日候选池回溯（闭环验证：昨日点名个股今日实际表现，对错复盘）","")}
-    ${manualBlock("pool_exclude","次日入池风险排除（剔除/回避标的及原因）","")}
+  return `<div class="section"><div class="sec-head"><span class="sec-no">8A</span><h2>仓位风控与候选池闭环</h2><span class="tag">完整结构化内容见「复盘观点」⑥⑦⑨</span></div><div class="sec-body rv-wrap">
+    <div class="rv-prose" style="background:#f6f9fe;border:1px solid var(--line2);border-radius:10px;padding:13px 17px;font-size:13.3px;line-height:1.9">
+      「昨日候选池回溯」「今日风险排除」「次日入池·入选理由与交易计划」「仓位与风控节奏」已按总分总结构统一放在 <b>⑦复盘观点</b> 页（⑥⑦⑧⑨节），本页不再重复维护，避免两处口径不一致。本页只保留：AI 每日三档推荐（8B）+ 你的本机自选池（8C，localStorage 保存、自动匹配当日涨停/龙虎榜/主力状态）。
+    </div>
   </div></div>
   <div class="section" style="margin-top:14px"><div class="sec-head"><span class="sec-no">8B</span><h2>今日三档观察池 · 核心观察 / 弹性 / 回避</h2><span class="tag">AI复盘推荐 · 仅研究观察、不承诺收益</span></div><div class="sec-body">
     ${pickPanel("① 核心观察（趋势延续：成交活跃 / 站上MA55 / 60分走强）",core,"core")}
@@ -228,62 +299,3 @@ function bindPool(){
    人工复核字段
    ============================================================ */
 function notes(){if(!state.notesDraft){state.notesDraft=JSON.parse(JSON.stringify(R.notes||{}))}return state.notesDraft}
-function noteText(v){
-  if(v==null)return "";
-  if(typeof v==="string")return v;
-  if(typeof v==="number")return String(v);
-  if(Array.isArray(v))return v.map(x=>typeof x==="object"?JSON.stringify(x):String(x)).join("\n");
-  const labels={win:"【赚钱效应】",lose:"【亏钱效应】",core:"【核心观察】",flex:"【弹性】",avoid:"【回避】"};
-  return Object.entries(v).map(([k,a])=>{const t=noteText(a);return t?((labels[k]||("【"+k+"】"))+"\n"+t):null}).filter(Boolean).join("\n")
-}
-function getNote(field,code){const n=notes();let v=n[field];if(code)v=(v&&v[code])||"";return noteText(v)}
-function getNoteRaw(field){return notes()[field]}
-function logicCards(v,tone){const a=Array.isArray(v)?v:(v?String(v).split(/\n/).filter(s=>s.trim()):[]);
-  if(!a.length)return '<span class="placeholder-empty">待复核：开启复核模式，一行一条</span>';
-  return `<ol class="logic-list ${tone||""}">${a.map((x,i)=>`<li data-n="${i+1}">${esc(typeof x==="object"?JSON.stringify(x):x)}</li>`).join("")}</ol>`;}
-function setNote(field,val,code){const n=notes();if(code){n[field]=n[field]||{};n[field][code]=val||""}else n[field]=val}
-function bindManualEditable(){
-  $$(".manual").forEach(box=>{
-    const field=box.dataset.field,view=box.querySelector("[data-view]");
-    if(!view)return;
-    view.style.whiteSpace="pre-wrap";
-    const v=getNote(field);
-    if(view.dataset.bound)return; // 保留 renderHome 预置的占位
-    if(view.dataset.logic){view.innerHTML=logicCards(getNoteRaw(field),view.dataset.logic);return;}
-    view.innerHTML=v?esc(v):'<span class="placeholder-empty">待复核：开启右上角「复核模式」后在此填写</span>';
-  });
-  $$(".manual-cell").forEach(td=>{
-    const {field,code}=td.dataset;const v=getNote(field,code);
-    td.innerHTML=v?esc(v):'<span class="placeholder-empty">待填</span>';td.style.whiteSpace="pre-wrap";
-  });
-  $$("[contenteditable]").forEach(el=>el.remove());
-  if(state.review){
-    $$(".manual .view-text").forEach(view=>{
-      const box=view.closest(".manual"),field=box.dataset.field;
-      view.contentEditable="true";
-      const v=getNote(field);view.textContent=v||"";
-      view.addEventListener("input",()=>{setNote(field,view.textContent);persistDraft()})
-    });
-    $$(".manual-cell").forEach(td=>{
-      td.contentEditable="true";const v=getNote(td.dataset.field,td.dataset.code);td.textContent=v||"";
-      td.addEventListener("input",()=>{setNote(td.dataset.field,td.textContent,td.dataset.code);persistDraft();if(td.dataset.field==="leader_score")refreshLeaderNum()})
-    })
-  }
-}
-function persistDraft(){try{localStorage.setItem("review_"+state.date,JSON.stringify(notes()))}catch(e){}}
-function applyNotesDraft(){
-  const saved=localStorage.getItem("review_"+state.date);
-  if(saved){try{state.notesDraft=JSON.parse(saved)}catch(e){}}
-  bindManualEditable();
-  if(window.echarts){const c=CHARTS["chart-thermo"];if(c)drawAllCharts()}
-}
-function exportNotes(){
-  const n=notes();download(`notes_${state.date}.json`,JSON.stringify(n,null,2),"application/json;charset=utf-8");
-  toast("复核稿已下载，请放入 data/ 目录，下次更新自动合并")}
-
-/* ============================================================
-   导出
-   ============================================================ */
-function idxMap(){return Object.fromEntries((R.indices||[]).map(x=>[x.name,x]))}
-function mdTable(head,rows){return `| ${head.join(" | ")} |\n|${head.map(()=>"---").join("|")}|\n`+
-  rows.map(r=>`| ${r.join(" | ")} |`).join("\n")}
