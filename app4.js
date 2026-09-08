@@ -20,6 +20,7 @@ function bindManualEditable(){
     const v=getNote(field);
     if(view.dataset.bound)return; // 保留 renderHome 预置的占位
     if(view.dataset.logic){view.innerHTML=logicCards(getNoteRaw(field),view.dataset.logic);return;}
+    if(view.dataset.insight){renderInsightView(view,field);return;}
     view.innerHTML=v?esc(v):'<span class="placeholder-empty">待复核：开启右上角「复核模式」后在此填写</span>';
   });
   $$(".manual-cell").forEach(td=>{
@@ -184,6 +185,9 @@ const PAGES=[
   ["lhb","龙虎榜","龙"],["riskdown","跌停与风险","5"],["emotion","情绪温度","6"],
   ["review","复盘观点","7"],["mypool","我的股票池","8"]
 ];
+const INS_CIRC="①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳";
+// 最后一个分述里，遇到这些总结性起句，切到“综合研判”卡
+const INS_SUMCUT=/[。；;]\s*(综合|综上|对比|总体|整体看?|结论|总之|因此|确认度|二者|这意味|需要后续|操作上|三方同向|技术面（[^）]*）\s*[+＋])/;
 const PAGE_RENDER={home:renderHome,global:renderGlobal,market:renderMarket,ladder:renderLadder,
   boards:renderBoards,funds:renderFunds,lhb:renderLHB,riskdown:renderRiskDown,emotion:renderEmotionPage,
   review:renderReview,mypool:renderMyPool};
