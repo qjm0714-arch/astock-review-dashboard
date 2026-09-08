@@ -6,8 +6,8 @@ function renderLadder(){
   const one=all.filter(r=>r.lb===1).flatMap(r=>r.items);
   const me=zp.money_effect,pr=zp.promotion,cp=zp.consec_premium,ld=zp.ladder||{};
   const promoCell=(p,lab)=>p?`<div class="kpi"><div class="lab">${lab}</div><div class="val" style="font-size:20px">${p.rate==null?"--":pct(p.rate)}</div><div class="sub">${p.k}/${p.n} 再封板</div></div>`:"";
-  const moveRow=(x)=>`<tr><td class="code">${x.code}</td><td>${esc(x.name)}</td><td class="r num">${x.pb}板进</td>
-    <td class="r num ${cls(x.ret)}"><b>${signed(x.ret)}%</b></td><td>${x.again?'<span class="tagchip chip-up">再涨停</span>':'<span class="tagchip chip-gray">未封</span>'}</td><td style="white-space:normal;color:var(--ink3);font-size:11.5px">${esc(x.industry||"")}</td></tr>`;
+  const moveRow=(x)=>`<tr><td class="code" data-v="${x.code}">${x.code}</td><td data-v="${esc(x.name)}">${esc(x.name)}</td><td class="r num" data-v="${x.pb??""}">${x.pb}板进</td>
+    <td class="r num ${cls(x.ret)}" data-v="${x.ret??""}"><b>${signed(x.ret)}%</b></td><td>${x.again?'<span class="tagchip chip-up">再涨停</span>':'<span class="tagchip chip-gray">未封</span>'}</td><td style="white-space:normal;color:var(--ink3);font-size:11.5px" data-v="${esc(x.industry||"")}">${esc(x.industry||"")}</td></tr>`;
   return `<div class="kpi-strip">
     <div class="kpi"><div class="lab">涨停</div><div class="val up">${lm.zt_count??"--"}</div><div class="sub">收盘封死口径(东财)</div></div>
     <div class="kpi"><div class="lab">跌停</div><div class="val down">${lm.dt_count??"--"}</div><div class="sub">收盘跌停</div></div>
@@ -34,8 +34,8 @@ function renderLadder(){
     </div>
     <div class="kvline" style="margin-top:10px"><span class="k">梯队断层</span><span class="v">今日最高${ld.max_board}板，板位分布 ${esc(JSON.stringify(ld.counts))}；${ld.gaps&&ld.gaps.length?`缺 <b class="down">${ld.gaps.join("、")}档</b>（最高标悬空，接力需谨慎）`:"无断层，梯队完整"}；交叉校验 ${esc(zp.cross_check?.again_vs_lbc2||"--")}</span></div>
     <div class="grid g2" style="margin-top:10px">
-      <div class="panel"><h3 class="up">反馈最强 Top5</h3><div class="tbl-wrap"><table><thead><tr><th>代码</th><th>名称</th><th class="r">板位</th><th class="r">今日涨幅</th><th class="r">状态</th><th>行业</th></tr></thead><tbody>${(zp.top_moves||[]).map(moveRow).join("")}</tbody></table></div></div>
-      <div class="panel"><h3 class="down">反馈最弱 Top5</h3><div class="tbl-wrap"><table><thead><tr><th>代码</th><th>名称</th><th class="r">板位</th><th class="r">今日涨幅</th><th class="r">状态</th><th>行业</th></tr></thead><tbody>${(zp.bot_moves||[]).map(moveRow).join("")}</tbody></table></div></div>
+      <div class="panel"><h3 class="up">反馈最强 Top5</h3><div class="tbl-wrap"><table><thead><tr><th class="sort-th">代码<span class="sarr">⇅</span></th><th class="sort-th">名称<span class="sarr">⇅</span></th><th class="r sort-th">板位<span class="sarr">⇅</span></th><th class="r sort-th">今日涨幅<span class="sarr">⇅</span></th><th class="sort-th">状态<span class="sarr">⇅</span></th><th class="sort-th">行业<span class="sarr">⇅</span></th></tr></thead><tbody>${(zp.top_moves||[]).map(moveRow).join("")}</tbody></table></div></div>
+      <div class="panel"><h3 class="down">反馈最弱 Top5</h3><div class="tbl-wrap"><table><thead><tr><th class="sort-th">代码<span class="sarr">⇅</span></th><th class="sort-th">名称<span class="sarr">⇅</span></th><th class="r sort-th">板位<span class="sarr">⇅</span></th><th class="r sort-th">今日涨幅<span class="sarr">⇅</span></th><th class="sort-th">状态<span class="sarr">⇅</span></th><th class="sort-th">行业<span class="sarr">⇅</span></th></tr></thead><tbody>${(zp.bot_moves||[]).map(moveRow).join("")}</tbody></table></div></div>
     </div>
     <div class="note-src">${esc(zp.note||"")} 交叉校验：再涨停集合==今日连板(lbc≥2)集合。</div>`
     :'<div class="muted">昨日涨停反馈需连续两个交易日归档（明日自动生效）；当前为首个运行日。</div>'}
@@ -117,7 +117,7 @@ function renderFunds(){
   <div class="panel" style="margin-top:14px"><h3>行业资金两日连续性（vs ${esc(cont.prev_date||"前一交易日")}，识别持续流入/流出与切换）</h3>
     ${contRows?`<div class="tbl-wrap"><table><thead><tr><th>行业</th><th class="r">前日主力净亿</th><th class="r">今日主力净亿</th><th class="r">变化</th><th class="r">连续性</th></tr></thead><tbody>${contRows}</tbody></table></div>`
       :'<div class="muted">连续性需连续两个交易日完整归档，明日自动生效。</div>'}
-    <div class="note-src">按今日主力净额从多到少排序，并与前一交易日对比：连续净流入=两日皆正，流出转流入=今日转正（潜在新主线），反之为切换信号。</div></div>
+    <div class="note-src">按今日主力净额绝对值前12行业与前一交易日对比：连续净流入=两日皆正，流出转流入=今日转正（潜在新主线），反之为切换信号。</div></div>
   <div class="panel" style="margin-top:14px"><h3>全市场主力资金净额序列（每日append，红正绿负）</h3>
     ${fh.length>=2?`<div class="chart sm" id="chart-fundhist" style="height:240px;min-height:240px"></div>`:'<div class="muted">序列累积中（需≥2个交易日）</div>'}</div>
   <div class="panel" style="margin-top:14px">
@@ -155,6 +155,28 @@ function lhbRow(x,side){const themeField=side==="buy"?"lhb_theme":"lhb_signal";
   <td class="r num">${yiWan(x.buy_yi,2)}</td><td class="r num">${yiWan(x.sell_yi,2)}</td>${seatCell(x)}
   <td style="white-space:normal;min-width:180px;font-size:11.5px;color:var(--ink2)">${esc(x.reason||"")}</td>
   <td class="manual-cell" data-field="${themeField}" data-code="${x.code}" style="white-space:normal;min-width:120px"></td></tr>`}
+// 通用类Excel列排序：点击 th.sort-th 即对所在表按该列排序（数值优先 td[data-v]，否则解析文本；首次降序，再点升序）
+function bindColSort(){
+  document.addEventListener("click",function(e){
+    const th=e.target.closest("th.sort-th");if(!th)return;
+    const table=th.closest("table");if(!table||!table.tBodies.length)return;
+    const ci=Array.prototype.indexOf.call(th.parentNode.children,th);
+    const desc=th.dataset.dir!=="desc";
+    Array.prototype.forEach.call(th.parentNode.children,x=>{if(x!==th){delete x.dataset.dir;x.classList.remove("active");
+      const a=x.querySelector(".sarr");if(a)a.textContent="⇅";}});
+    th.dataset.dir=desc?"desc":"asc";th.classList.add("active");
+    const tb=table.tBodies[0];
+    const numval=td=>{if(!td)return NaN;if(td.dataset.v!=null&&td.dataset.v!==""){const n=parseFloat(td.dataset.v);if(!isNaN(n))return n;}
+      const n=parseFloat((td.textContent||"").replace(/[+,%\s板只]/g,""));return isNaN(n)?NaN:n;};
+    const rows=Array.prototype.slice.call(tb.rows);
+    rows.sort((a,b)=>{const va=numval(a.cells[ci]),vb=numval(b.cells[ci]);
+      if(isNaN(va)||isNaN(vb)){const sa=a.cells[ci]?a.cells[ci].textContent:"",sb=b.cells[ci]?b.cells[ci].textContent:"";
+        return desc?sb.localeCompare(sa,"zh"):sa.localeCompare(sb,"zh");}
+      return desc?vb-va:va-vb;});
+    rows.forEach(r=>tb.appendChild(r));
+    const sa=th.querySelector(".sarr");if(sa)sa.textContent=desc?"▼":"▲";
+  });
+}
 function orgRow(x){return `<tr><td class="code">${x.code}</td><td><b>${esc(x.name)}</b></td>
     <td class="r num ${cls(x.chg)}">${signed(x.chg)}</td><td class="r num">${x.buy_times}</td><td class="r num">${x.sell_times}</td>
     <td class="r num up">${yiWan(x.buy_yi)}</td><td class="r num down">${yiWan(x.sell_yi)}</td>
@@ -203,52 +225,3 @@ function renderLHB(){
 /* ============================================================
    P7 跌停与风险 + 自检 + 源 + 免责
    ============================================================ */
-function renderRiskDown(){
-  const lm=R.limit||{};
-  const dtRows=(lm.dt_items||[]).map(x=>`<tr><td class="code">${x.code}</td><td><b>${esc(x.name)}</b></td>
-    <td class="r num ${cls(x.chg)}">${signed(x.chg)}%</td><td class="r num">${f2(x.price)}</td>
-    <td class="r num">${yiWan(x.amount_yi)}</td><td class="r num">${f2(x.turnover)}%</td>
-    <td style="white-space:normal;color:var(--ink3);font-size:11.5px">${esc(x.industry||"")}</td></tr>`).join("");
-  const sc=R.selfcheck||{items:[],n_pass:0,n_total:0},warn=R.meta.warnings||[],src=R.meta.sources||{};
-  const items=sc.items.map(c=>`<li>${c.pass?'<span class="badge b-ok">通过</span>':'<span class="badge b-danger">未过</span>'}
-    <span>${esc(c.item)}</span><span class="muted num">${esc(Object.entries(c).filter(([k])=>!["item","pass"].includes(k)).map(([k,v])=>`${k}=${v}`).join("  "))}</span></li>`).join("");
-  const srcRows=Object.entries(src).map(([k,v])=>`<li><b>${k}</b>：${esc(v)}</li>`).join("");
-  return `<div class="section"><div class="sec-head"><span class="sec-no">5A</span><h2>跌停股全表（风险释放方向）</h2><span class="tag">收盘跌停 ${lm.dt_count??0} 只 · 炸板 ${lm.zb_count??0} 只</span></div><div class="sec-body">
-    ${dtRows?`<div class="tbl-wrap"><table><thead><tr><th>代码</th><th>名称</th><th class="r">涨跌幅</th><th class="r">收盘</th><th class="r">成交亿</th><th class="r">换手%</th><th>行业</th></tr></thead><tbody>${dtRows}</tbody></table></div>`
-      :'<div class="muted">今日无跌停股</div>'}
-  </div></div>
-  <div class="section" style="margin-top:14px"><div class="sec-head"><span class="sec-no">5B</span><h2>风险提示（人工复核）</h2></div><div class="sec-body">
-    ${manualBlock("risks","风险提示（外生冲击/流动性/情绪/交易拥挤/事件落空，一行一条）","")}
-    ${manualBlock("unverified","未核实清单（传闻/单一信源/待确认数据，明确标注）","")}
-  </div></div>
-  <div class="grid g2" style="margin-top:14px">
-    <div class="panel"><h3>数据交叉验证自检（自动硬门禁）</h3>
-      <div style="margin:6px 0">${badge(`通过 ${sc.n_pass}/${sc.n_total}`,sc.all_pass?"ok":"warn")}</div>
-      <ul class="selfcheck">${items}</ul>
-      ${warn.length?`<div style="margin-top:8px"><div class="muted">运行警告：</div><ul class="bul">${warn.map(w=>`<li>${esc(w.module)}: ${esc(w.msg)}</li>`).join("")}</ul></div>`:""}
-    </div>
-    <div class="panel"><h3>信息源清单（口径可追溯）</h3><ul class="bul">${srcRows}</ul>
-      <div class="note-src">主源东方财富（push2ex涨停池/datacenter数据中心，收盘终值）；交叉源新浪财经（60分K/外盘/美股）、gate.io（BTC）；恐贪韭圈儿funddb加密接口；zt_prev/emotion由自有历史池本地实算。全部可在 update_daily.py 复算。</div></div>
-  </div>
-  <div class="panel" style="margin-top:14px"><h3>免责声明</h3>
-  <p class="muted" style="font-size:12.5px;line-height:1.9">本工作台由本地程序自动抓取公开行情数据并聚合计算，主观结论为人工/AI复核的研究笔记。数据虽经双源交叉与自检门禁，仍可能因供应商口径、快照时点、接口调整产生偏差（已知口径差异：涨停家数东财收盘封死 vs 数据宝盘中触板；全市场成交额为交易所综合指数合成口径；VIX为近月期货非现货；情绪周期分为窗口内minmax相对值，跨日全量重算）。内容仅供个人投研学习，不构成投资建议、不写买入价位与仓位指令，不承诺收益，据此交易风险自担。市场有风险，投资需谨慎。</p></div>`}
-
-/* ============================================================
-   P8 情绪温度(恐贪 + 情绪周期 + 五维温度计 + 六阶段)
-   ============================================================ */
-function thermometerScores(){
-  const lm=R.limit||{},bd=R.breadth||{};
-  const maxLB=Math.max(0,...(lm.ladder||[]).map(x=>x.lb));
-  const s1=Math.min(20,Math.round((lm.zt_count||0)/50*20));
-  const s2=Math.min(20,Math.round(maxLB/7*20));
-  const s3=Math.round((lm.seal_rate||0)/100*20);
-  const s4=bd.total?Math.round(bd.up/bd.total*20):0;
-  return {vals:[s1,s2,s3,s4],maxLB,totalAuto:s1+s2+s3+s4}}
-function leaderScoreNum(){
-  // leader_score 文本形如 "16/20：最高6板……"，提取首个 0-20 整数作为第五维得分
-  const t=getNote("leader_score")||"";
-  const m=String(t).match(/\d{1,2}/);
-  let v=m?parseInt(m[0],10):0;
-  if(isNaN(v))v=0;return Math.max(0,Math.min(20,v));
-}
-function refreshLeaderNum(){const el=$("#leaderScoreNum");if(el)el.textContent=leaderScoreNum();}
