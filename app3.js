@@ -13,8 +13,9 @@ function renderRiskDown(){
       :'<div class="muted">今日无跌停股</div>'}
   </div></div>
   <div class="section" style="margin-top:14px"><div class="sec-head"><span class="sec-no">5B</span><h2>风险提示（人工复核）</h2></div><div class="sec-body">
-    ${manualBlock("risks","风险提示（外生冲击/流动性/情绪/交易拥挤/事件落空，一行一条）","")}
-    ${manualBlock("unverified","未核实清单（传闻/单一信源/待确认数据，明确标注）","")}
+    ${insightBlock("risks","风险提示 · 逐条列示（外生冲击/流动性/情绪/拥挤/事件落空）","risks")}
+    <div style="height:13px"></div>
+    ${insightBlock("unverified","未核实 / 口径差异诚实披露","unverified")}
   </div></div>
   <div class="grid g2" style="margin-top:14px">
     <div class="panel"><h3>数据交叉验证自检（自动硬门禁）</h3>
@@ -89,7 +90,7 @@ function renderEmotionPage(){
         </tbody></table></div>
         ${el.score?`<div class="note-src">自动定位：${esc(emo.position_text||"")}</div>`:""}
       </div>
-      ${manualBlock("emotion_stage","人工 · 情绪周期最终定位（结合自动分与盘面，给出阶段+依据+次日观察）","")}
+      ${insightBlock("emotion_stage","情绪周期最终定位 · 总-分-总（阶段 + 依据 + 次日观察）","prose")}
     </div>
   </div>`}
 
@@ -141,7 +142,7 @@ function rvEvents(){
 /* ④ 三情景：解析"基准（概率50%）：区间，描述"为表 */
 function rvScenarios(){
   const arr=rvArr("scenarios");
-  if(!arr.length)return `<div class="grid g2">${manualBlock("scenarios","次日三情景（基准/乐观/谨慎：概率+区间+应对）","")}${manualBlock("falsify","证伪信号（出现即推翻判断+对应仓位动作）","")}`;
+  if(!arr.length)return `<div class="grid g2">${manualBlock("scenarios","次日三情景（基准/乐观/谨慎：概率+区间+应对）","")}${manualBlock("falsify","证伪信号（出现即推翻判断+对应仓位动作）","")}</div>`;
   const rows=arr.map(s=>{
     let m=s.match(/^(基准|乐观|谨慎|悲观|中性)[^（(：:]*[（(]?\s*概率?\s*(\d+\s*%)?\s*[)）]?\s*[:：]\s*([\s\S]*)$/);
     let name,prob,rest;if(m){name=m[1];prob=m[2]||"--";rest=m[3].trim()}else{name="情景";prob="--";rest=s}
