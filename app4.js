@@ -1,3 +1,62 @@
+function noteText(v){
+  if(v==null)return "";
+  if(typeof v==="string")return v;
+  if(typeof v==="number")return String(v);
+  if(Array.isArray(v))return v.map(x=>typeof x==="object"?JSON.stringify(x):String(x)).join("\n");
+  const labels={win:"【赚钱效应】",lose:"【亏钱效应】",core:"【核心观察】",flex:"【弹性】",avoid:"【回避】"};
+  return Object.entries(v).map(([k,a])=>{const t=noteText(a);return t?((labels[k]||("【"+k+"】"))+"\n"+t):null}).filter(Boolean).join("\n")
+}
+function getNote(field,code){const n=notes();let v=n[field];if(code)v=(v&&v[code])||"";return noteText(v)}
+function getNoteRaw(field){return notes()[field]}
+function logicCards(v,tone){const a=Array.isArray(v)?v:(v?String(v).split(/\n/).filter(s=>s.trim()):[]);
+  if(!a.length)return '<span class="placeholder-empty">待复核：开启复核模式，一行一条</span>';
+  return `<ol class="logic-list ${tone||""}">${a.map((x,i)=>`<li data-n="${i+1}">${esc(typeof x==="object"?JSON.stringify(x):x)}</li>`).join("")}</ol>`;}
+function setNote(field,val,code){const n=notes();if(code){n[field]=n[field]||{};n[field][code]=val||""}else n[field]=val}
+function bindManualEditable(){
+  $$(".manual").forEach(box=>{
+    const field=box.dataset.field,view=box.querySelector("[data-view]");
+    if(!view)return;
+    view.style.whiteSpace="pre-wrap";
+    const v=getNote(field);
+    if(view.dataset.bound)return; // 保留 renderHome 预置的占位
+    if(view.dataset.logic){view.innerHTML=logicCards(getNoteRaw(field),view.dataset.logic);return;}
+    view.innerHTML=v?esc(v):'<span class="placeholder-empty">待复核：开启右上角「复核模式」后在此填写</span>';
+  });
+  $$(".manual-cell").forEach(td=>{
+    const {field,code}=td.dataset;const v=getNote(field,code);
+    td.innerHTML=v?esc(v):'<span class="placeholder-empty">待填</span>';td.style.whiteSpace="pre-wrap";
+  });
+  $$("[contenteditable]").forEach(el=>el.remove());
+  if(state.review){
+    $$(".manual .view-text").forEach(view=>{
+      const box=view.closest(".manual"),field=box.dataset.field;
+      view.contentEditable="true";
+      const v=getNote(field);view.textContent=v||"";
+      view.addEventListener("input",()=>{setNote(field,view.textContent);persistDraft()})
+    });
+    $$(".manual-cell").forEach(td=>{
+      td.contentEditable="true";const v=getNote(td.dataset.field,td.dataset.code);td.textContent=v||"";
+      td.addEventListener("input",()=>{setNote(td.dataset.field,td.textContent,td.dataset.code);persistDraft();if(td.dataset.field==="leader_score")refreshLeaderNum()})
+    })
+  }
+}
+function persistDraft(){try{localStorage.setItem("review_"+state.date,JSON.stringify(notes()))}catch(e){}}
+function applyNotesDraft(){
+  const saved=localStorage.getItem("review_"+state.date);
+  if(saved){try{state.notesDraft=JSON.parse(saved)}catch(e){}}
+  bindManualEditable();
+  if(window.echarts){const c=CHARTS["chart-thermo"];if(c)drawAllCharts()}
+}
+function exportNotes(){
+  const n=notes();download(`notes_${state.date}.json`,JSON.stringify(n,null,2),"application/json;charset=utf-8");
+  toast("复核稿已下载，请放入 data/ 目录，下次更新自动合并")}
+
+/* ============================================================
+   导出
+   ============================================================ */
+function idxMap(){return Object.fromEntries((R.indices||[]).map(x=>[x.name,x]))}
+function mdTable(head,rows){return `| ${head.join(" | ")} |\n|${head.map(()=>"---").join("|")}|\n`+
+  rows.map(r=>`| ${r.join(" | ")} |`).join("\n")}
 function buildMarkdown(){
   const im=idxMap(),cr=R.crowding,tmt=R.tmt,fg=R.feargreed,lm=R.limit,L=[];
   const n=notes();const NT=(k,f)=>noteText(n[k])||(f||"（待复核补充）");
