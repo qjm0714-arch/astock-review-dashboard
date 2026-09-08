@@ -79,8 +79,8 @@ function drawAllCharts(){
         markArea:{silent:true,data:[[{yAxis:40,itemStyle:{color:"#fdf0e6"}},{yAxis:45}],[{yAxis:45,itemStyle:{color:"#fbe6e2"}},{yAxis:50}],[{yAxis:50,itemStyle:{color:"#f6d4cf"}},{yAxis:60}]]}},
       {name:"TMT占比",type:"line",smooth:true,symbol:"circle",symbolSize:5,data:dates.map(d=>tm[d]??null),
         lineStyle:{width:2.6,color:BLUE,type:"dashed"},itemStyle:{color:BLUE}}]});
-  // 主力资金序列
-  const fhist=R.fund_hist||[];
+  // 主力资金序列（近10个交易日滚动）
+  const fhist=(R.fund_hist||[]).slice(-10);
   makeChart("chart-fundhist",{grid:{left:54,right:18,top:18,bottom:30},tooltip:TT,
     xAxis:{type:"category",data:fhist.map(x=>x.date.slice(5)),...AXIS_STYLE,axisLabel:{fontSize:10,rotate:35}},
     yAxis:{type:"value",name:"亿元",...AXIS_STYLE},
@@ -142,3 +142,4 @@ function switchFundTab(tab){
   tb.innerHTML=list.map(fundRow).join("");
   $$("[data-fundtab]").forEach(b=>b.classList.toggle("on",b.dataset.fundtab===tab))
 }
+
