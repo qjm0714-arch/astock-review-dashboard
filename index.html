@@ -220,6 +220,63 @@ ul.bul{padding-left:18px}ul.bul li{margin:3px 0;font-size:13px}
 .rv-wrap{display:flex;flex-direction:column;gap:16px}
 .rv-wrap .manual .view-text{font-size:13.6px;line-height:1.9}
 .rv-wrap .manual{padding:14px 18px}
+/* ============== 复盘观点 3.0 · 总分总 + 点击折叠（2026-09-08 邱总第三批，对标优秀样例并增强） ============== */
+.rv-card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.rv-head{display:flex;align-items:center;gap:11px;padding:12px 18px;background:linear-gradient(180deg,#fbfcfe,#f3f7fc);border-bottom:1px solid var(--line2)}
+.rv-no{font-family:var(--mono);font-weight:800;color:#fff;background:linear-gradient(135deg,#1a3a6e,#2b6fd4);border-radius:7px;padding:3px 10px;font-size:12.5px;letter-spacing:.5px;flex:0 0 auto}
+.rv-head h3{font-size:15px;color:var(--ink);font-weight:800;margin:0}
+.rv-sub{margin-left:auto;font-size:11.5px;color:var(--ink3);font-weight:400}
+.rv-body{padding:16px 18px}
+.rv-prose{font-size:14px;line-height:2;color:#33405a;white-space:pre-wrap;text-align:justify}
+/* ① 市场定性（总） */
+.rv-nature{border-left:5px solid var(--blue2);background:linear-gradient(100deg,#f2f7fd,#fbfdff);border-radius:0 10px 10px 0;padding:15px 19px;font-size:14.5px;line-height:2.05;color:#22324f;font-weight:600;white-space:pre-wrap}
+/* ② 论点论据双栏 */
+.rv-args{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:860px){.rv-args{grid-template-columns:1fr}}
+.rv-side{border-radius:10px;padding:13px 16px;border:1px solid}
+.rv-bull{background:#fdf6f5;border-color:#f0d4d1}
+.rv-bear{background:#f4faf6;border-color:#cfe8da}
+.rv-side h4{font-size:13.5px;margin:0 0 8px;font-weight:800}
+.rv-bull h4{color:var(--up)} .rv-bear h4{color:var(--down)}
+.rv-side ul{list-style:none;padding:0;margin:0}
+.rv-side li{position:relative;padding:6px 0 6px 20px;font-size:13.3px;line-height:1.75;border-bottom:1px dashed rgba(26,47,90,.07)}
+.rv-side li:last-child{border-bottom:none}
+.rv-bull li::before{content:"+";position:absolute;left:3px;top:6px;color:var(--up);font-weight:800}
+.rv-bear li::before{content:"−";position:absolute;left:3px;top:6px;color:var(--down);font-weight:800}
+/* ③ 核心驱动事件：标题点击折叠 */
+details.rv-seat{border:1px solid var(--line);border-radius:10px;margin-bottom:10px;background:#fcfdfe;overflow:hidden}
+details.rv-seat:last-child{margin-bottom:0}
+details.rv-seat[open]{background:#fff;box-shadow:0 1px 5px rgba(26,47,90,.08)}
+details.rv-seat summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 16px;user-select:none}
+details.rv-seat summary::-webkit-details-marker{display:none}
+details.rv-seat summary:hover{background:#f6f9fe}
+.rv-stitle{flex:1;font-size:14px;font-weight:700;color:var(--ink);line-height:1.55}
+.rv-arrow{flex:0 0 auto;width:9px;height:9px;border-right:2px solid var(--blue2);border-bottom:2px solid var(--blue2);transform:rotate(45deg);transition:transform .2s;margin-right:4px}
+details.rv-seat[open] .rv-arrow{transform:rotate(-135deg)}
+.rv-seat .ev-tone{flex:0 0 auto}
+.rv-drv{padding:2px 16px 13px;border-top:1px dashed var(--line2)}
+.rv-dseg{display:flex;gap:12px;padding:9px 0;align-items:flex-start}
+.rv-dlab{flex:0 0 64px;text-align:center;font-size:12px;font-weight:800;border-radius:6px;padding:2px 0;height:fit-content;margin-top:2px}
+.rv-dlab.d{background:#eef3fb;color:#1a3a6e}.rv-dlab.r{background:#fdeeea;color:#b05a12}.rv-dlab.a{background:#f1ecfa;color:#5b3a9e}
+.rv-dtxt{flex:1;font-size:13.6px;line-height:1.9;color:#33405a;min-width:0}
+/* ⑦ 风险排除 */
+.rv-risk{display:flex;flex-direction:column;gap:9px}
+.rv-rk{border-left:4px solid var(--amber);background:var(--amber-bg);border-radius:0 8px 8px 0;padding:10px 15px;font-size:13.5px;line-height:1.8;color:#5a4316}
+/* 三重共振 / 列表 / 表格 */
+.rv-triple{background:linear-gradient(100deg,#16294f,#1f4078);border-radius:10px;padding:15px 19px;font-size:13.8px;line-height:2;color:#e7eefb;white-space:pre-wrap}
+.rv-blist{list-style:none;padding:0;margin:0}
+.rv-blist li{position:relative;padding:5px 0 5px 18px;font-size:12.9px;line-height:1.78;color:#46566f}
+.rv-blist li::before{content:"▸";position:absolute;left:2px;top:5px;color:var(--blue2);font-weight:700}
+.rv-cal{background:#f8fafd;border:1px solid var(--line2);border-radius:10px;padding:13px 16px;height:100%}
+.rv-cal h4{font-size:13.5px;color:var(--ink);margin:0 0 8px;font-weight:800}
+.rv-unverified{background:#fdfaf2;border:1px solid var(--amber-line);border-radius:10px;padding:13px 16px;height:100%}
+.rv-unverified h4{font-size:13.5px;color:#8a5a12;margin:0 0 8px;font-weight:800}
+.rv-unverified .rv-blist li::before{content:"!";color:var(--amber);font-weight:800}
+.rv-wrap table{font-size:13px;margin:0}
+.rv-wrap table td{vertical-align:top;line-height:1.72}
+.rv-scname{font-weight:800;color:var(--ink);white-space:nowrap}
+.rv-scprob{font-family:var(--mono);font-weight:700;color:var(--blue2);white-space:nowrap}
+.rv-code{font-family:var(--mono);color:var(--ink3);font-size:12px;white-space:nowrap}
 /* ============== 我的股票池·三档人工推荐 ============== */
 .pick-panel{border-radius:10px}
 .pick-panel.pick-core{border-left:5px solid #d93026}
