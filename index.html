@@ -244,6 +244,21 @@ th.sort-th:hover{background:#e2eaf7}
 th.sort-th .sarr{font-size:10px;color:#9fb2d0;margin-left:3px}
 th.sort-th.active{background:#dbe6f8;color:#1a3a6e}
 th.sort-th.active .sarr{color:#1a3a6e}
+/* ============== 首页多头/风险逻辑·编号卡片（2026-09-07 邱总：1/2/3/4清晰列出，勿堆文字） ============== */
+.logic-list{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column;gap:9px}
+.logic-list li{position:relative;background:#fff;border:1px solid var(--line2);border-radius:8px;
+  padding:9px 13px 9px 40px;font-size:13.3px;line-height:1.8;color:#33405a;text-align:justify}
+.logic-list li::before{content:attr(data-n);position:absolute;left:11px;top:9px;width:21px;height:21px;border-radius:50%;
+  color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.logic-list.tone-bull li{border-left:3px solid #d93026}
+.logic-list.tone-bull li::before{background:linear-gradient(135deg,#e0564b,#c02b22)}
+.logic-list.tone-bear li{border-left:3px solid #0a8f4e}
+.logic-list.tone-bear li::before{background:linear-gradient(135deg,#17a35e,#0a7a43)}
+.side-col .logic-list li{font-size:13px}
+/* 首页长结论疏排版（保留换行、拉大行距） */
+.manual .view-text{line-height:1.8}
+.home-prose{font-size:13.6px;line-height:1.95;white-space:pre-line;text-align:justify;color:#33405a}
+.home-prose p{margin:0 0 7px}
 </style>
 </head>
 <body>
@@ -295,7 +310,7 @@ th.sort-th.active .sarr{color:#1a3a6e}
 <script src="app4.js"></script>
 <script src="charts.js"></script>
 <script>
-window.DATES=["2026-09-04","2026-09-07"];
+window.DATES=["2026-09-04", "2026-09-07"];
 </script>
 <script src="latest.js"></script>
 <script src="patch1.js"></script>
