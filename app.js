@@ -55,6 +55,79 @@ function manualBlock(field,label,hint){
   <div class="edit-hint">${hint||"直接编辑，退出复核模式后可导出复核稿保存。"}</div></div>`}
 
 /* ============================================================
+   人工解读·总-分-总 结构化美化（2026-09-08 第四批）
+   把带 ①②③ 的人工长文解析为：总论卡 → 编号分述卡 → 综合研判卡；
+   dict 关键位→支撑/压力双栏；list 风险/未核实→逐条卡。
+   复核模式下仍回退为纯文本 contentEditable，退出复核自动恢复结构化。
+   ============================================================ */
+function insParse(raw){
+  let t=String(raw==null?"":raw).replace(/\r/g,"").trim();
+  let marks=[];
+  for(let i=0;i<t.length;i++){const n=INS_CIRC.indexOf(t[i]);if(n>=0)marks.push({i,n:n+1});}
+  let lead="",steps=[],sum="";
+  if(marks.length){
+    lead=t.slice(0,marks[0].i).replace(/[：:；;\s]+$/,"").trim();
+    for(let k=0;k<marks.length;k++){
+      const st=marks[k].i+1,en=k+1<marks.length?marks[k+1].i:t.length;
+      steps.push({n:marks[k].n,text:t.slice(st,en).replace(/^[\s：:、.）)]+/,"").trim()});
+    }
+    const last=steps[steps.length-1];
+    const m=last.text.match(INS_SUMCUT);
+    if(m){const cut=m.index+1;const head=last.text.slice(0,cut).trim();sum=last.text.slice(cut).trim();if(head){last.text=head}else{steps.pop()}}
+  }else{lead=t;}
+  return {lead,steps,sum};
+}
+function insightProseHtml(field){
+  const raw=getNote(field);
+  if(raw==null||String(raw).trim()==="")return "";
+  const {lead,steps,sum}=insParse(raw);const p=[];
+  if(lead)p.push(`<div class="insight-lead">${esc(lead)}</div>`);
+  if(steps.length)p.push(`<ol class="insight-steps">${steps.map(s=>`<li><span class="isn">${s.n}</span>${esc(s.text)}</li>`).join("")}</ol>`);
+  if(sum)p.push(`<div class="insight-sum"><span class="islab">综合研判</span>${esc(sum)}</div>`);
+  if(!p.length)p.push(`<div class="insight-prose">${esc(raw)}</div>`);
+  return `<div class="insight">${p.join("")}</div>`;
+}
+function levelsHtml(field){
+  const o=getNoteRaw(field);
+  if(!o||typeof o!=="object")return "";
+  const sup=o.support||o["支撑"]||o.sup||[],res=o.resistance||o["压力"]||o.res||[];
+  const li=a=>(a||[]).map(x=>`<li>${esc(String(x).replace(/^[-·•\s]+/,""))}</li>`).join("");
+  if(!(sup.length||res.length))return "";
+  return `<div class="levels-grid">
+    <div class="level-col lv-sup"><h4>▲ 关键支撑位</h4><ul>${li(sup)}</ul></div>
+    <div class="level-col lv-res"><h4>▼ 关键压力位</h4><ul>${li(res)}</ul></div></div>`;
+}
+function _noteArr(field){
+  const v=getNoteRaw(field);
+  const a=Array.isArray(v)?v:(v?String(v).split(/\n/):[]);
+  return a.map(x=>String(x).trim()).filter(Boolean);
+}
+function riskListHtml(field){
+  const a=_noteArr(field);if(!a.length)return "";
+  return `<div class="insight">${a.map((x,i)=>{
+    let s=x,hot=/最高优先|拥挤度|45%|45 %|极度危险/.test(s),tag="";
+    const tm=s.match(/^【([^】]+)】\s*/);if(tm){tag=tm[1];s=s.slice(tm[0].length)}
+    return `<div class="risk-item ${hot?"hot":""}">${tag?`<span class="ritag">${esc(tag)}</span>`:`<span class="rin">${i+1}</span>`}${esc(s)}</div>`;
+  }).join("")}</div>`;
+}
+function unvListHtml(field){
+  const a=_noteArr(field);if(!a.length)return "";
+  return `<div class="insight">${a.map((x,i)=>`<div class="unv-item"><span class="uin">${i+1}</span>${esc(x)}</div>`).join("")}</div>`;
+}
+function insightBlock(field,label,kind){
+  return `<div class="manual insight-manual" data-field="${field}"><span class="mlab">人工 · ${label}</span>
+  <div class="view-text" data-view="${field}" data-insight="${kind||"prose"}"></div></div>`;
+}
+function renderInsightView(view,field){
+  const kind=view.dataset.insight||"prose";let h="";
+  if(kind==="levels")h=levelsHtml(field);
+  else if(kind==="risks")h=riskListHtml(field);
+  else if(kind==="unverified")h=unvListHtml(field);
+  else h=insightProseHtml(field);
+  view.innerHTML=h||'<span class="placeholder-empty">待复核：开启右上角「复核模式」后在此填写</span>';
+}
+
+/* ============================================================
    渲染入口 / 页签
    ============================================================ */
 function renderAll(){
@@ -185,8 +258,7 @@ function renderGlobal(){
         <tbody>${m6rows}</tbody></table></div>
         <div class="note-src">VIX 为近月期货（现货无稳定免费自动源）；白银 ${f2(g.silver?.price)}。</div>
       </div>
-      <div class="manual" data-field="macro_interp"><span class="mlab">人工 · 全球流动性综合判断（1-2句）</span>
-        <div class="view-text" data-view="macro_interp"></div></div>
+      ${insightBlock("macro_interp","全球流动性综合判断 · 总-分-总","prose")}
     </div>
     <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
       <div class="panel"><h3>美债收益率曲线 + 倒挂监测</h3>
@@ -249,26 +321,15 @@ function renderMarket(){
   <div class="section" style="margin-top:14px"><div class="sec-head"><span class="sec-no">8</span><h2>三位一体 · 60分钟技术分析</h2><span class="tag">MA55 + MACD 五级定档</span></div><div class="sec-body">
     <div class="note-src" style="margin-bottom:10px">MA55=近55根60分K收盘均值；DIF=EMA12-EMA26，DEA=DIF的9日EMA，柱=2×(DIF-DEA)。极强=站上MA55且DIF/DEA双正金叉；强=零轴上方金叉；中性=零轴缠绕；弱=零轴下方金叉收敛；极弱=跌破MA55且零轴下方死叉。</div>
     <div class="grid g3">${techCards}</div>
-    <div class="manual" style="margin-top:12px" data-field="tech_detail"><span class="mlab">人工 · 三位一体综合技术解读</span>
-      <div class="view-text" data-view="tech_detail"></div></div>
+    <div style="margin-top:12px">${insightBlock("tech_detail","三位一体综合技术解读 · 总-分-总","prose")}</div>
   </div></div>
 
   <div class="grid g2" style="margin-top:14px">
-    ${manualBlock("key_levels","关键支撑/压力位 + 证伪绑定动作（支撑位、压力位各一行，跌破/站上对应动作）","")}
-    ${manualBlock("triple","三重共振结论（技术面+情绪面+资金面是否共振及方向）","")}
+    ${insightBlock("key_levels","关键支撑 / 压力位（跌破/站上对应动作）","levels")}
+    ${insightBlock("triple","三重共振结论（技术面 × 情绪面 × 资金面）","prose")}
   </div>`}
 
 /* ============================================================
    P3 涨停梯队 + 昨日涨停今日反馈
    ============================================================ */
 function fmtFbt(v){if(v==null||v==="")return "--";const s=String(v).padStart(6,"0");return `${s.slice(0,2)}:${s.slice(2,4)}`}
-function ladderStockTable(items){
-  const H=(t,al)=>`<th class="${al||""} sort-th">${t}<span class="sarr">⇅</span></th>`;
-  return `<div class="tbl-wrap"><table><thead><tr>${H("代码")}${H("名称")}${H("连板","r")}${H("涨幅%","r")}
-    ${H("收盘","r")}${H("首次封板","r")}${H("封单亿","r")}${H("炸板次数","r")}${H("成交亿","r")}${H("换手%","r")}${H("行业")}</tr></thead><tbody>
-    ${items.map(it=>`<tr><td class="code" data-v="${it.code}">${it.code}</td><td data-v="${esc(it.name)}"><b>${esc(it.name)}</b></td><td class="r num up" data-v="${it.lb}">${it.lb}板</td>
-    <td class="r num ${cls(it.chg)}" data-v="${it.chg??""}">${signed(it.chg)}</td><td class="r num" data-v="${it.price??""}">${f2(it.price)}</td>
-    <td class="r num" data-v="${it.first_seal??""}">${fmtFbt(it.first_seal)}</td><td class="r num" data-v="${it.seal_yi??""}">${yiWan(it.seal_yi)}</td>
-    <td class="r num ${(it.open_times||0)>0?"down":""}" data-v="${it.open_times||0}">${it.open_times||0}</td><td class="r num" data-v="${it.amount_yi??""}">${yiWan(it.amount_yi)}</td>
-    <td class="r num" data-v="${it.turnover??""}">${f2(it.turnover)}</td><td style="white-space:normal;color:var(--ink3);font-size:11.5px" data-v="${esc(it.industry||"")}">${esc(it.industry||"")}</td></tr>`).join("")}
-  </tbody></table></div>`}
