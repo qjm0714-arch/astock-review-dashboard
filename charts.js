@@ -17,6 +17,7 @@ function drawAllCharts(){
   sparkLine("spark-vix","vix",BLUE);sparkLine("spark-us10y","us10y",GOLD);sparkLine("spark-us30y","us30y",PURPLE);
   sparkLine("spark-gold","gold",UP);sparkLine("spark-lme_cu","lme_cu","#c47b2a");sparkLine("spark-dxy","dxy",BLUED);
   sparkLine("spark-dram","dram",DOWN);
+  sparkLine("spark-wti","wti","#b06a1f");
   // 美债曲线
   const bd=R.global?.us_bonds||{};const bk=["US2Y","US5Y","US10Y","US30Y"];
   makeChart("chart-yieldcurve",{grid:{left:44,right:14,top:16,bottom:26},
