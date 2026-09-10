@@ -57,8 +57,9 @@ function drawAllCharts(){
     yAxis:[{type:"value",name:"恐贪",min:0,max:100,...AXIS_STYLE},{type:"value",name:"HS300",scale:true,...AXIS_STYLE,splitLine:{show:false}}],
     series:[{name:"恐贪",type:"bar",data:fh.map(x=>({value:x.fear,itemStyle:{color:x.fear<25?UP:x.fear<45?"#e8a23d":x.fear<=55?"#9aa7bd":DOWN}}))},
       {name:"沪深300",type:"line",yAxisIndex:1,data:fh.map(x=>x.hs),smooth:true,symbol:"none",lineStyle:{color:BLUE,width:2.2}}]});
-  // 行业条形
-  const it=[...(R.industries?.bottom5||[]).reverse(),...(R.industries?.top5||[])];
+  // 行业条形：合并前5/后5后按均涨幅升序，ECharts类目轴首项在底部→顶部为涨幅最大、底部为跌幅最大（2026-09-10邱总）
+  const it=[...(R.industries?.top5||[]),...(R.industries?.bottom5||[])]
+    .slice().sort((a,b)=>(a.avg_chg??0)-(b.avg_chg??0));
   const itv=it.map(x=>x.avg_chg);
   makeChart("chart-indbar",{grid:{left:110,right:58,top:10,bottom:20},
     xAxis:{type:"value",...AXIS_STYLE},yAxis:{type:"category",data:it.map(x=>x.name),...AXIS_STYLE,axisLabel:{fontSize:11}},
@@ -86,8 +87,17 @@ function drawAllCharts(){
     yAxis:{type:"value",name:"亿元",...AXIS_STYLE},
     series:[{type:"bar",barWidth:14,data:fhist.map(x=>({value:x.main_yi,itemStyle:{color:barBySign(x.main_yi)}})),
       label:{show:fhist.length<=15,position:"top",formatter:p=>signed(p.value,0),fontSize:10}}]});
-  // 龙虎榜
-  const lhb=R.lhb||{};const bs=[...(lhb.sell_top5||[]).reverse(),...(lhb.buy_top5||[])];
+  // 两融余额近20交易日滚动折线（2026-09-10邱总）
+  const mhist=(R.margin_hist||[]).slice(-20);
+  if(mhist.length>=2) makeChart("chart-margin",{grid:{left:56,right:20,top:20,bottom:30},tooltip:TT,
+    xAxis:{type:"category",data:mhist.map(x=>x.date.slice(5)),...AXIS_STYLE,axisLabel:{fontSize:10,rotate:35}},
+    yAxis:{type:"value",name:"亿元",scale:true,...AXIS_STYLE},
+    series:[{name:"两融合计",type:"line",smooth:true,symbol:"circle",symbolSize:4,
+      data:mhist.map(x=>x.total_yi),lineStyle:{width:2.6,color:BLUE},itemStyle:{color:BLUE},areaStyle:{color:BLUE,opacity:.08},
+      markPoint:{silent:true,symbolSize:44,label:{fontSize:9.5,formatter:p=>signed(p.value,0)},data:[{coord:[mhist.length-1,mhist[mhist.length-1].total_yi]}]}}]});
+  // 龙虎榜：净买/净卖合并后按净额升序，类目轴首项在底部→顶部净买最多、底部净卖最多（2026-09-10邱总）
+  const lhb=R.lhb||{};const bs=[...(lhb.buy_top5||[]),...(lhb.sell_top5||[])]
+    .slice().sort((a,b)=>(a.net_yi??0)-(b.net_yi??0));
   const bsv=bs.map(x=>x.net_yi);
   makeChart("chart-lhb",{grid:{left:90,right:64,top:10,bottom:20},
     xAxis:{type:"value",name:"净买额(亿)",...AXIS_STYLE},yAxis:{type:"category",data:bs.map(x=>x.name),...AXIS_STYLE},
@@ -113,10 +123,10 @@ function drawAllCharts(){
       {name:"涨停数",type:"bar",yAxisIndex:1,data:es.map(x=>x.limit_up),itemStyle:{color:"#f0b6b0",opacity:.7},barWidth:10},
       {name:"最高板",type:"line",yAxisIndex:1,data:es.map(x=>x.highest),smooth:true,symbol:"diamond",symbolSize:7,lineStyle:{color:GOLD,width:1.8},itemStyle:{color:GOLD}}]});
   // 温度计雷达
-  const th=thermometerScores();const ls=leaderScoreNum();
+  const th=fiveDimScores();
   makeChart("chart-thermo",{radar:{indicator:[{name:"涨停数量",max:20},{name:"连板高度",max:20},{name:"封板率",max:20},{name:"上涨占比",max:20},{name:"龙头健康",max:20}],
     radius:"66%",axisName:{color:"#46566f",fontSize:11},splitLine:{lineStyle:{color:"#e0e7f1"}},splitArea:{areaStyle:{color:["#fbfcfe","#f4f7fb"]}}},
-    tooltip:{},series:[{type:"radar",data:[{value:[...th.vals,ls],name:"情绪温度",areaStyle:{color:BLUE,opacity:.18},lineStyle:{color:BLUE,width:2},itemStyle:{color:BLUE}}]}]});
+    tooltip:{},series:[{type:"radar",data:[{value:th.vals,name:`情绪温度 ${th.total}/100`,areaStyle:{color:BLUE,opacity:.18},lineStyle:{color:BLUE,width:2},itemStyle:{color:BLUE}}]}]});
   // 60分K ×3
   (R.tech60||[]).forEach(t=>{
     const cats=t.kl.map(x=>x.day.slice(5,16));
@@ -142,4 +152,3 @@ function switchFundTab(tab){
   tb.innerHTML=list.map(fundRow).join("");
   $$("[data-fundtab]").forEach(b=>b.classList.toggle("on",b.dataset.fundtab===tab))
 }
-
