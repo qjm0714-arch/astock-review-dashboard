@@ -1,3 +1,6 @@
+/* ============================================================
+   P7 跌停与风险 + 自检 + 源 + 免责
+   ============================================================ */
 function renderRiskDown(){
   const lm=R.limit||{};
   const dtRows=(lm.dt_items||[]).map(x=>`<tr><td class="code">${x.code}</td><td><b>${esc(x.name)}</b></td>
@@ -41,15 +44,32 @@ function thermometerScores(){
   const s4=bd.total?Math.round(bd.up/bd.total*20):0;
   return {vals:[s1,s2,s3,s4],maxLB,totalAuto:s1+s2+s3+s4}}
 function leaderScoreNum(){
-  // leader_score 文本形如 "16/20：最高6板……"，提取首个 0-20 整数作为第五维得分
-  const t=getNote("leader_score")||"";
-  const m=String(t).match(/\d{1,2}/);
-  let v=m?parseInt(m[0],10):0;
-  if(isNaN(v))v=0;return Math.max(0,Math.min(20,v));
+  // 只提取“⑤龙头健康度 N/20”这一维的得分；严禁抓整段首个数字（总分34会被误截成20，2026-09-10邱总批）
+  const t=String(getNote("leader_score")||"");
+  let m=t.match(/龙头健康度[^\d]{0,8}(\d{1,2})\s*\/\s*20/)
+      ||t.match(/[⑤5][^①②③④⑤\d]{0,8}(\d{1,2})\s*\/\s*20/);
+  let v=m?parseInt(m[1],10):NaN;
+  if(isNaN(v)){ // 兜底：取所有“N/20”里的最后一个（第五维排在最后）
+    const all=[...t.matchAll(/(\d{1,2})\s*\/\s*20/g)].map(x=>parseInt(x[1],10)).filter(n=>n>=0&&n<=20);
+    v=all.length?all[all.length-1]:NaN;
+  }
+  if(isNaN(v))return 0;return Math.max(0,Math.min(20,v));
 }
 function refreshLeaderNum(){const el=$("#leaderScoreNum");if(el)el.textContent=leaderScoreNum();}
+// 五维统一口径：人工 leader_score 若写全①-⑤则以人工为准（保证表格/雷达/文本总分一致，2026-09-10邱总）；缺维回退自动
+function fiveDimScores(){
+  const auto=thermometerScores();
+  const t=String(getNote("leader_score")||"");
+  const circ=["①","②","③","④","⑤"],vals=[null,null,null,null,null];
+  circ.forEach((c,i)=>{const m=t.match(new RegExp(c+"[^\\d]{0,10}(\\d{1,2})\\s*\\/\\s*20"));if(m)vals[i]=parseInt(m[1],10);});
+  if(vals[4]==null)vals[4]=leaderScoreNum();
+  for(let i=0;i<4;i++)if(vals[i]==null)vals[i]=auto.vals[i];
+  const human=circ.every((c,i)=>new RegExp(c+"[^\\d]{0,10}\\d{1,2}\\s*\\/\\s*20").test(t));
+  const total=vals.reduce((a,b)=>a+(b||0),0);
+  return {vals,maxLB:auto.maxLB,totalAuto:auto.totalAuto,total,human};
+}
 function renderEmotionPage(){
-  const fg=R.feargreed||{},[fz,fk]=fgZone(fg.today),th=thermometerScores();
+  const fg=R.feargreed||{},[fz,fk]=fgZone(fg.today),th=fiveDimScores();
   const emo=R.emotion||{},el=emo.latest||{},ser=emo.series||[];
   return `<div class="grid g2">
     <div class="panel"><h3>恐贪指数（韭圈儿官方 · 沪深300）</h3>
@@ -68,14 +88,15 @@ function renderEmotionPage(){
     </div>
   </div>
   <div class="grid g2" style="margin-top:14px">
-    <div class="panel"><h3>五维情绪温度计（前四维自动，龙头健康度人工）</h3>
+    <div class="panel"><h3>五维情绪温度计（${th.human?"人工五维终稿":"前四维自动，龙头健康度人工"} · 合计 <b class="num">${th.total}</b>/100）</h3>
       <div class="chart sm" id="chart-thermo" style="height:270px;min-height:270px"></div>
       <div class="tbl-wrap"><table><thead><tr><th>维度</th><th class="r">得分</th><th>依据</th></tr></thead><tbody>
-        <tr><td>涨停数量</td><td class="r num">${th.vals[0]}/20</td><td class="muted">涨停${R.limit?.zt_count}只，50只满分</td></tr>
-        <tr><td>连板高度</td><td class="r num">${th.vals[1]}/20</td><td class="muted">最高${th.maxLB}板，7板满分</td></tr>
-        <tr><td>封板率</td><td class="r num">${th.vals[2]}/20</td><td class="muted">封板率${f1(R.limit?.seal_rate)}%</td></tr>
+        <tr><td>涨停数量</td><td class="r num">${th.vals[0]}/20</td><td class="muted">涨停${R.limit?.zt_count}只，50只满分${th.human?"（人工校准）":""}</td></tr>
+        <tr><td>连板高度</td><td class="r num">${th.vals[1]}/20</td><td class="muted">最高${th.maxLB}板，7板满分${th.human?"（人工校准）":""}</td></tr>
+        <tr><td>封板率</td><td class="r num">${th.vals[2]}/20</td><td class="muted">封板率${f1(R.limit?.seal_rate)}%${th.human?"（人工校准）":""}</td></tr>
         <tr><td>上涨占比</td><td class="r num">${th.vals[3]}/20</td><td class="muted">${f1(R.breadth?.up/(R.breadth?.total||1)*100)}%个股上涨</td></tr>
-        <tr><td>龙头健康度（人工）</td><td class="r num"><b id="leaderScoreNum">--</b>/20</td><td class="manual-cell" data-field="leader_score" data-plain="1" style="white-space:normal;color:var(--ink2);min-width:260px"></td></tr>
+        <tr><td>龙头健康度（人工）</td><td class="r num"><b id="leaderScoreNum">${th.vals[4]}</b>/20</td><td class="manual-cell" data-field="leader_score" data-plain="1" style="white-space:normal;color:var(--ink2);min-width:260px"></td></tr>
+        <tr style="font-weight:800;background:var(--panel2,#f6f8fb)"><td>五维合计</td><td class="r num">${th.total}/100</td><td class="muted">与左侧人工结论文本、雷达图三者必须一致（自检门禁）</td></tr>
       </tbody></table></div>
     </div>
     <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
@@ -176,7 +197,7 @@ function rvPoolNew(){
     let mid=parts.slice(1),plan="";
     if(mid.length){const last=mid[mid.length-1];if(/观察|不追|回踩|止损|止盈|逢低|轻仓|等|破|分散|配套|不超|上限/.test(last)){plan=last;mid=mid.slice(0,-1)}}
     let reason=mid.join("；")||(isSec?s:"");
-    return `<tr><td class="rv-code">${esc(code||"板块")}</td><td style="white-space:normal;font-weight:700;color:var(--ink)">${esc(name)}</td><td style="white-space:normal">${esc(reason)}</td><td style="white-space:normal">${esc(plan||"回踩/分歧日再评估，不追高")}</td></tr>`;
+    return `<tr><td class="rv-code">${esc(code||"板块")}</td><td class="rv-pn">${esc(name)}</td><td style="white-space:normal">${esc(reason)}</td><td style="white-space:normal">${esc(plan||"回踩/分歧日再评估，不追高")}</td></tr>`;
   }).join("");
   return `<div class="tbl-wrap"><table><thead><tr><th>代码</th><th>标的</th><th>入选理由</th><th>交易计划</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="note-src" style="margin-top:8px">仅为研究观察标的，不构成买卖建议、不承诺收益；仓位遵循「逢低轻仓/回踩观察、禁止大阳线追高」纪律。</div>`;
