@@ -101,13 +101,21 @@ function fundRow(x){return `<tr><td class="code">${x.code}</td><td>${esc(x.name)
   <td class="r num ${cls(x.main_yi)}"><b>${signed(x.main_yi)}</b></td><td class="r num ${cls(x.big_yi)}">${signed(x.big_yi)}</td>
   <td class="r num ${cls(x.mid_yi)}">${signed(x.mid_yi)}</td><td class="r num ${cls(x.small_yi)}">${signed(x.small_yi)}</td></tr>`}
 function renderFunds(){
-  const cr=R.crowding||{},tmt=R.tmt||{},f=R.funds||{},mg=R.margin,nb=R.northbound||{};
+  const cr=R.crowding||{},tmt=R.tmt||{},f=R.funds||{},mg=R.margin;
   const [cz,ck]=crowdZone(cr.ratio),tp=tmt.parts||{};
   const cont=R.continuity||{rows:[]};
   const contRows=cont.rows.slice().sort((a,b)=>(b.today_yi??0)-(a.today_yi??0)).map(x=>{const[t,k]=contTag(x.tag);return `<tr><td>${esc(x.name)}</td>
     <td class="r num ${cls(x.prev_yi)}">${signed(x.prev_yi)}</td><td class="r num ${cls(x.today_yi)}"><b>${signed(x.today_yi)}</b></td>
     <td class="r num ${cls(x.chg_yi)}">${signed(x.chg_yi)}</td><td>${badge(t,k)}</td></tr>`}).join("");
   const fh=(R.fund_hist||[]).slice(-10);
+  const mgh=(R.margin_hist||[]).slice(-20), mgl=mgh[mgh.length-1];
+  const mgTitle=(mgl&&mg)?`两融余额（近20交易日滚动）· ${mgl.date}(T-1) ${yiWan(mgl.total_yi)}亿`
+      +(mgl.mom_pct!=null?` · 环比 <b class="${cls(mgl.mom_pct)}">${arrow(mgl.mom_pct)}${signed(mgl.mom_pct)}%（${signed(mgl.mom_yi)}亿）</b>`:"")
+      :(mg?`两融余额（T-1 ${mg.date}）${yiWan(mg.total_yi)}亿`:"两融余额（近20交易日滚动）");
+  const iaRows=(R.index_amount||[]).map(x=>`<tr><td>${esc(x.name)}</td>
+      <td class="r num">${yiWan(x.amount_yi)}</td>
+      <td class="r num ${cls(x.amount_mom_pct)}">${x.amount_mom_pct==null?"--":arrow(x.amount_mom_pct)+signed(x.amount_mom_pct)+"%"}</td>
+      <td class="r num ${cls(x.chg_pct)}">${signed(x.chg_pct)}%</td></tr>`).join("");
   return `<div class="kpi-strip">
     <div class="kpi"><div class="lab">全市场拥挤度（前5%成交占比）</div><div class="val">${f2(cr.ratio)}%</div><div class="sub">${badge(cz,ck)} 前${cr.topn}/${cr.total_n}只 · ${yiWan(cr.top5_yi)}/${yiWan(cr.total_yi)}亿</div></div>
     <div class="kpi"><div class="lab">TMT 成交额占比</div><div class="val">${f2(tmt.ratio)}%</div><div class="sub">${yiWan(tmt.amount_yi)}亿（电子+通信+计算机+传媒）</div></div>
@@ -139,15 +147,14 @@ function renderFunds(){
       <th class="r">主力净</th><th class="r">大单</th><th class="r">中单</th><th class="r">小单</th></tr></thead>
       <tbody id="fundTbody"></tbody></table></div></div>
   <div class="grid g3" style="margin-top:14px">
-    <div class="panel"><h3>两融余额（T-1）</h3>
-      ${mg?`<div class="kvline"><span class="k">数据日期</span><span class="v num">${mg.date}</span></div>
-      <div class="kvline"><span class="k">融资余额</span><span class="v num">${yiWan(mg.rzye_yi)} 亿</span></div>
-      <div class="kvline"><span class="k">融券余额</span><span class="v num">${yiWan(mg.rqye_yi)} 亿</span></div>
-      <div class="kvline"><span class="k">两融合计</span><span class="v num"><b>${yiWan(mg.total_yi)} 亿</b></span></div>
-      <div class="kvline"><span class="k">当日融资买入</span><span class="v num">${yiWan(mg.rzmre_yi)} 亿</span></div>`:'<div class="muted">未获取</div>'}</div>
-    <div class="panel"><h3>北向资金</h3>
-      <div class="kvline"><span class="k">状态</span><span class="v">${badge("净买入已停披露","neutral")}</span></div>
-      <p class="muted" style="font-size:12.5px;margin-top:6px">${esc(nb.note||"自2024年8月起交易所停披露北向净买入，仅成交额口径，不代表资金方向。")}</p></div>
+    <div class="panel"><h3>${mgTitle}</h3>
+      ${mgh.length>=2?`<div class="chart sm" id="chart-margin" style="height:212px;min-height:212px"></div>`:'<div class="muted">两融历史累积中（需≥2个交易日）</div>'}
+      ${mg?`<div class="kvline" style="margin-top:6px"><span class="k">融资/融券/融资买入</span><span class="v num">${yiWan(mg.rzye_yi)} / ${yiWan(mg.rqye_yi)} / ${yiWan(mg.rzmre_yi)} 亿</span></div>
+      <div class="note-src">交易所T-1披露口径，折线为两融合计（融资+融券）近20个交易日滚动。</div>`:""}</div>
+    <div class="panel"><h3>主要指数成交额（环比昨日 · 今日涨跌幅）</h3>
+      <div class="tbl-wrap"><table><thead><tr><th>指数</th><th class="r">今日成交亿</th><th class="r">较昨日</th><th class="r">今日涨跌</th></tr></thead>
+      <tbody>${iaRows||'<tr><td colspan=4 class=muted>需连续两日归档</td></tr>'}</tbody></table></div>
+      <div class="note-src">北向净买入自2024年8月起交易所永久停披露、本机亦无稳定成交额口径，故以主要指数成交额环比表替代，反映各市场量能缩放；不代表资金方向。</div></div>
     <div class="manual" data-field="omo"><span class="mlab">人工 · 央行OMO/中间价</span><div class="view-text" data-view="omo" style="margin-top:6px"></div></div>
   </div>`}
 
@@ -166,7 +173,6 @@ function lhbRow(x,side){const themeField=side==="buy"?"lhb_theme":"lhb_signal";
   <td class="r num">${yiWan(x.buy_yi,2)}</td><td class="r num">${yiWan(x.sell_yi,2)}</td>${seatCell(x)}
   <td style="white-space:normal;min-width:180px;font-size:11.5px;color:var(--ink2)">${esc(x.reason||"")}</td>
   <td class="manual-cell" data-field="${themeField}" data-code="${x.code}" style="white-space:normal;min-width:120px"></td></tr>`}
-// 通用类Excel列排序：点击 th.sort-th 即对所在表按该列排序（数值优先 td[data-v]，否则解析文本；首次降序，再点升序）
 function bindColSort(){
   document.addEventListener("click",function(e){
     const th=e.target.closest("th.sort-th");if(!th)return;
@@ -232,7 +238,3 @@ function renderLHB(){
       <div class="manual" data-field="lhb_interp" style="margin-top:10px"><span class="mlab">人工 · 游资进攻vs出货解读</span>
       <div class="view-text" data-view="lhb_interp"></div></div></div>
   </div>`}
-
-/* ============================================================
-   P7 跌停与风险 + 自检 + 源 + 免责
-   ============================================================ */
