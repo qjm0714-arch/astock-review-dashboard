@@ -170,19 +170,17 @@ function renderHome(){
     return a.length?`<ol class="logic-list ${tone}">${a.map((x,i)=>`<li data-n="${i+1}">${esc(typeof x==="object"?JSON.stringify(x):x)}</li>`).join("")}</ol>`
     :`<div class="placeholder-empty">${ph}</div>`;};
   return `<div class="section"><div class="sec-body">
-    <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px">
-      <div style="flex:1;min-width:280px">
-        <div style="font-size:12.5px;color:var(--ink3)">${R.meta.date} 收盘复盘 · 数据生成 ${R.meta.generated_at} · v${R.meta.version}</div>
-        <div class="manual" style="margin-top:8px" data-field="headline"><span class="mlab">人工 · 一句话定调</span>
-          <div class="view-text" data-view="headline"></div></div>
-      </div>
+    <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+      <div style="flex:1;min-width:300px;font-size:12.5px;color:var(--ink3)">${R.meta.date} 收盘复盘 · 数据生成 ${R.meta.generated_at} · v${R.meta.version}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
         ${badge("拥挤度 "+f2(cr.ratio)+"% "+cz,ck)}${badge("TMT "+f2(tmt.ratio)+"%",tmt.ratio>=40?"warn":"ok")}
         ${badge("恐贪 "+f2(fg.today)+" "+fz,fk)}${badge("涨停"+(lm.zt_count??"--")+"/跌停"+(lm.dt_count??"--"),"info")}
         ${el.zone?badge("情绪 "+f1(el.score)+" "+el.zone,emoZone(el.zone)):""}
       </div>
     </div>
-    <div class="home-grid">
+    <div class="manual home-headline" data-field="headline"><span class="mlab">人工 · 一句话定调</span>
+      <div class="view-text" data-view="headline" style="font-size:14px;line-height:1.9;white-space:normal;word-break:break-word"></div></div>
+    <div class="home-grid" style="margin-top:13px">
       ${bk("上证指数",f2(sh?.close),`${arrow(sh?.chg_pct)} ${signed(sh?.chg_pct)}% · 成交${yiWan(sh?.amount_yi)}亿`,cls(sh?.chg_pct))}
       ${bk("创业板指",f2(cy?.close),`${arrow(cy?.chg_pct)} ${signed(cy?.chg_pct)}%`,cls(cy?.chg_pct))}
       ${bk("科创50",f2(kc?.close),`${arrow(kc?.chg_pct)} ${signed(kc?.chg_pct)}%`,cls(kc?.chg_pct))}
@@ -190,10 +188,9 @@ function renderHome(){
       ${bk("全市场成交",yiWan(cr.total_yi)+"亿",`沪深 ${yiWan(cr.sh_sz_yi)} + 北交 ${yiWan(cr.bj_yi)}`,"")}
       ${bk("涨/跌/平",`${f0(bd.up)}/${f0(bd.down)}`,`平${f0(bd.flat)} · 涨跌比${f2(bd.ratio)}`,bd.up>=bd.down?"up":"down")}
       ${bk("情绪周期分",el.score?f1(el.score):"--",el.zone?`${el.zone} · 近3日${el.trend}`:"窗口累积中",el.zone?emoZone(el.zone):"")}
-      ${bk("昨日涨停今日",zp.money_effect?f2(zp.money_effect.avg)+"%":"--",zp.money_effect?`中位${f2(zp.money_effect.median)}% · 再涨停${pct(zp.money_effect.limit_up_again_rate)}`:"需两日归档",zp.money_effect?cls(zp.money_effect.avg):"")}
     </div>
-    <div class="manual" style="margin-top:14px" data-field="core_summary"><span class="mlab">人工 · 核心结论（AI每日复核润色）</span>
-      <div class="view-text home-prose" data-view="core_summary"></div></div>
+    <div class="manual home-headline" style="margin-top:14px" data-field="core_summary"><span class="mlab">人工 · 核心结论（AI每日复核润色）</span>
+      <div class="view-text home-prose" data-view="core_summary" style="white-space:normal;word-break:break-word"></div></div>
   </div></div>
 
   <div class="grid g2">
@@ -254,7 +251,7 @@ function renderGlobal(){
           Object.entries(g.us_cross_em||{}).map(([k,v])=>`${k} ${f2(v.close)}(${signed(v.chg_pct)}%)`).join(" / ")||"--"}</div>
       </div>
       <div class="panel"><h3>全球大类资产六项（抓取时刻快照，历史日重跑为当时值）</h3>
-        <div class="tbl-wrap"><table><thead><tr><th>资产</th><th class="r">最新</th><th class="r">涨跌</th><th>口径/备注</th></tr></thead>
+        <div class="tbl-wrap"><table><thead><tr><th>资产</th><th class="r">最新</th><th class="r">涨跌</th><th class="r">口径/备注</th></tr></thead>
         <tbody>${m6rows}</tbody></table></div>
         <div class="note-src">VIX 为近月期货（现货无稳定免费自动源）；白银 ${f2(g.silver?.price)}。</div>
       </div>
