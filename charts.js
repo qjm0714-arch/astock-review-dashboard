@@ -87,11 +87,12 @@ function drawAllCharts(){
     yAxis:{type:"value",name:"亿元",...AXIS_STYLE},
     series:[{type:"bar",barWidth:14,data:fhist.map(x=>({value:x.main_yi,itemStyle:{color:barBySign(x.main_yi)}})),
       label:{show:fhist.length<=15,position:"top",formatter:p=>signed(p.value,0),fontSize:10}}]});
-  // 两融余额近20交易日滚动折线（2026-09-10邱总；2026-09-11节点加大/外蓝内白空心/去末端气泡）
+  // 两融余额近20交易日滚动折线（2026-09-10邱总）
   const mhist=(R.margin_hist||[]).slice(-20);
   if(mhist.length>=2) makeChart("chart-margin",{grid:{left:56,right:20,top:26,bottom:30},tooltip:TT,
     xAxis:{type:"category",data:mhist.map(x=>x.date.slice(5)),...AXIS_STYLE,axisLabel:{fontSize:10,rotate:35}},
     yAxis:{type:"value",name:"亿元",scale:true,...AXIS_STYLE},
+    // 2026-09-11邱总：节点加大、外蓝内白空心、去掉末端蓝色气泡（不使用markPoint）
     series:[{name:"两融合计",type:"line",smooth:true,symbol:"circle",symbolSize:9,showSymbol:true,
       data:mhist.map(x=>x.total_yi),lineStyle:{width:2.6,color:BLUE},
       itemStyle:{color:"#ffffff",borderColor:BLUE,borderWidth:2},
@@ -153,3 +154,4 @@ function switchFundTab(tab){
   tb.innerHTML=list.map(fundRow).join("");
   $$("[data-fundtab]").forEach(b=>b.classList.toggle("on",b.dataset.fundtab===tab))
 }
+
