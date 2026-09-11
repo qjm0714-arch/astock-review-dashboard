@@ -18,12 +18,35 @@ function renderLadder(){
   const promoCell=(p,lab)=>p?`<div class="kpi"><div class="lab">${lab}</div><div class="val" style="font-size:20px">${p.rate==null?"--":pct(p.rate)}</div><div class="sub">${p.k}/${p.n} 再封板</div></div>`:"";
   const moveRow=(x)=>`<tr><td class="code" data-v="${x.code}">${x.code}</td><td data-v="${esc(x.name)}">${esc(x.name)}</td><td class="r num" data-v="${x.pb??""}">${x.pb}板进</td>
     <td class="r num ${cls(x.ret)}" data-v="${x.ret??""}"><b>${signed(x.ret)}%</b></td><td>${x.again?'<span class="tagchip chip-up">再涨停</span>':'<span class="tagchip chip-gray">未封</span>'}</td><td style="white-space:normal;color:var(--ink3);font-size:11.5px" data-v="${esc(x.industry||"")}">${esc(x.industry||"")}</td></tr>`;
-  return `<div class="kpi-strip">
-    <div class="kpi"><div class="lab">涨停</div><div class="val up">${lm.zt_count??"--"}</div><div class="sub">收盘封死口径(东财)</div></div>
-    <div class="kpi"><div class="lab">跌停</div><div class="val down">${lm.dt_count??"--"}</div><div class="sub">收盘跌停</div></div>
-    <div class="kpi"><div class="lab">炸板</div><div class="val">${lm.zb_count??"--"}</div><div class="sub">封板率 ${f1(lm.seal_rate)}%</div></div>
-    <div class="kpi"><div class="lab">最高板</div><div class="val">${all[0]?.lb??0}<span style="font-size:13px">板</span></div><div class="sub">${all[0]?.items.map(i=>i.name).join("、")||"--"}</div></div>
-  </div>
+  const ztInd=lm.zt_industry||{rows:[],total:lm.zt_count??0,covered:0};
+  const dtInd=lm.dt_industry||{rows:[]};
+  const maxLB=all[0]?.lb??0, leaders=(all[0]?.items||[]).map(i=>i.name).join("、")||"--";
+  const _ztn=lm.zt_count??0,_zbn=lm.zb_count??0;
+  const zbRate=(_ztn+_zbn)?_zbn/(_ztn+_zbn)*100:null;
+  const willLab=zbRate==null?"--":(zbRate>=30?"封板意愿弱":zbRate>=18?"封板意愿一般":"封板意愿强");
+  const willCls=zbRate==null?"flat":(zbRate>=30?"down":zbRate>=18?"flat":"up");
+  const boardDist=all.map(r=>`${r.lb}板${r.count}`).join("、");
+  const _prLab={"1to2":"1进2","2to3":"2进3","3plus":"3板+"};
+  const prLine=pr?["1to2","2to3","3plus"].map(k=>{const p=pr[k];return p?`${_prLab[k]}=${p.rate==null?"--":pct(p.rate)}(${p.k}/${p.n})`:""}).filter(Boolean).join("，"):"";
+  const concLab=ztInd.covered>=20?"较分散":ztInd.covered>=10?"适度集中":"高度集中";
+  const ldRow=x=>`<tr><td data-v="${esc(x.name)}">${esc(x.name)}</td><td class="r num" data-v="${x.count}"><b>${x.count}</b></td><td class="r num" data-v="${x.pct}">${f1(x.pct)}%</td></tr>`;
+  return `<div class="section"><div class="sec-head"><span class="sec-no">1</span><h2>涨停方向分布与梯队总览</h2><span class="tag">申万二级行业 · 列头可排序</span></div><div class="sec-body">
+    <div class="ld-grid">
+      <div class="panel">
+        <h3>涨停方向分布（今日涨停共 ${lm.zt_count??"--"} 只 · 按申万二级行业统计）</h3>
+        <div class="ld-stat"><span>涨停<b class="up">${lm.zt_count??"--"}</b></span><span>跌停<b class="down">${lm.dt_count??"--"}</b></span><span>炸板<b>${lm.zb_count??"--"}</b></span><span>封板率<b>${f1(lm.seal_rate)}%</b></span><span>覆盖<b>${ztInd.covered}</b>个二级行业</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th class="sort-th">二级行业<span class="sarr">⇅</span></th><th class="r sort-th">涨停家数<span class="sarr">⇅</span></th><th class="r sort-th">占比<span class="sarr">⇅</span></th></tr></thead><tbody>${(ztInd.rows||[]).map(ldRow).join("")}</tbody></table></div>
+        <div class="ld-foot">点击列头可按该列 从多到少 / 从少到多 排序（类 Excel）。口径：东财涨停池 ${lm.zt_count??0} 只全部涨停股（含首板/2板/3板+）按所属申万二级行业归类、从多到少排序；涨停方向${concLab}（覆盖 ${ztInd.covered} 个行业）。</div>
+        ${(dtInd.rows||[]).length?`<div class="ld-foot">跌停方向（申万二级，从多到少）：${dtInd.rows.slice(0,8).map(x=>`${esc(x.name)}${x.count}只`).join("、")}</div>`:""}
+      </div>
+      <div class="ld-right">
+        <div class="panel ld-card"><div class="lab">最高连板</div><div class="bigv up">${maxLB}<span style="font-size:15px"> 板</span></div><div class="sub2">${esc(leaders)}</div></div>
+        <div class="panel ld-card"><div class="lab">连板梯队（3板+ / 2板 / 首板）</div><div class="bigv">${high.length} / ${two.length} / ${one.length}</div><div class="sub2">板位：${boardDist||"--"}${ld.gaps&&ld.gaps.length?`；缺 <b class="down">${ld.gaps.join("、")}档</b>`:"；梯队无断层"}${prLine?`<br>晋级率：${prLine}`:""}</div></div>
+        <div class="panel ld-card"><div class="lab">炸板率</div><div class="bigv ${willCls}">${zbRate==null?"--":f1(zbRate)+"%"}</div><div class="${willCls}" style="font-weight:700;font-size:12.5px">${willLab}</div><div class="sub2">封板率 ${f1(lm.seal_rate)}% · 炸板 ${_zbn} / 涨停 ${_ztn}</div></div>
+        <div class="panel ld-card ld-dir manual" data-field="ladder_direction"><div class="lab" style="font-weight:800;color:var(--blue)">方向解读 <span style="font-weight:400;color:var(--ink3)">（人工）</span></div><div class="view-text" data-view="ladder_direction"></div></div>
+      </div>
+    </div>
+  </div></div>
 
   <div class="section" style="margin-top:14px"><div class="sec-head"><span class="sec-no">2A</span><h2>连板梯队分表（高度板 / 二连板 / 首板）</h2><span class="tag">封单·炸板次数·首封时间</span></div><div class="sec-body">
     <div class="panel" style="margin-bottom:12px"><h3 class="up">高度板（≥3板，市场总龙头所在）</h3>${high.length?ladderStockTable(high):'<div class="muted">无高度板</div>'}</div>
@@ -101,13 +124,14 @@ function fundRow(x){return `<tr><td class="code">${x.code}</td><td>${esc(x.name)
   <td class="r num ${cls(x.main_yi)}"><b>${signed(x.main_yi)}</b></td><td class="r num ${cls(x.big_yi)}">${signed(x.big_yi)}</td>
   <td class="r num ${cls(x.mid_yi)}">${signed(x.mid_yi)}</td><td class="r num ${cls(x.small_yi)}">${signed(x.small_yi)}</td></tr>`}
 function renderFunds(){
-  const cr=R.crowding||{},tmt=R.tmt||{},f=R.funds||{},mg=R.margin;
+  const cr=R.crowding||{},tmt=R.tmt||{},f=R.funds||{},mg=R.margin,nb=R.northbound||{};
   const [cz,ck]=crowdZone(cr.ratio),tp=tmt.parts||{};
   const cont=R.continuity||{rows:[]};
   const contRows=cont.rows.slice().sort((a,b)=>(b.today_yi??0)-(a.today_yi??0)).map(x=>{const[t,k]=contTag(x.tag);return `<tr><td>${esc(x.name)}</td>
     <td class="r num ${cls(x.prev_yi)}">${signed(x.prev_yi)}</td><td class="r num ${cls(x.today_yi)}"><b>${signed(x.today_yi)}</b></td>
     <td class="r num ${cls(x.chg_yi)}">${signed(x.chg_yi)}</td><td>${badge(t,k)}</td></tr>`}).join("");
   const fh=(R.fund_hist||[]).slice(-10);
+  // 两融近20交易日滚动（末值为最新T-1）；主要指数成交额环比表（替代长期不更新的北向卡，2026-09-10邱总）
   const mgh=(R.margin_hist||[]).slice(-20), mgl=mgh[mgh.length-1];
   const mgTitle=(mgl&&mg)?`两融余额（近20交易日滚动）· ${mgl.date}(T-1) ${yiWan(mgl.total_yi)}亿`
       +(mgl.mom_pct!=null?` · 环比 <b class="${cls(mgl.mom_pct)}">${arrow(mgl.mom_pct)}${signed(mgl.mom_pct)}%（${signed(mgl.mom_yi)}亿）</b>`:"")
@@ -173,6 +197,7 @@ function lhbRow(x,side){const themeField=side==="buy"?"lhb_theme":"lhb_signal";
   <td class="r num">${yiWan(x.buy_yi,2)}</td><td class="r num">${yiWan(x.sell_yi,2)}</td>${seatCell(x)}
   <td style="white-space:normal;min-width:180px;font-size:11.5px;color:var(--ink2)">${esc(x.reason||"")}</td>
   <td class="manual-cell" data-field="${themeField}" data-code="${x.code}" style="white-space:normal;min-width:120px"></td></tr>`}
+// 通用类Excel列排序：点击 th.sort-th 即对所在表按该列排序（数值优先 td[data-v]，否则解析文本；首次降序，再点升序）
 function bindColSort(){
   document.addEventListener("click",function(e){
     const th=e.target.closest("th.sort-th");if(!th)return;
@@ -212,29 +237,3 @@ function bindOrgSort(){
       const a=h.querySelector(".sarr");if(a)a.textContent=on?(orgSortState.desc?"▼":"▲"):"⇅";});
   });
 }
-function renderLHB(){
-  const l=R.lhb||{};
-  const ov=(l.ladder_overlap||[]).map(x=>`<span class="lb-stock">${x.lb}板 ${esc(x.name)}
-    <span class="ind ${cls(x.net_yi)}">${signed(x.net_yi,2)}亿</span></span>`).join("")||'<span class="muted">无交集</span>';
-  return `<div class="kpi-strip">
-    <div class="kpi"><div class="lab">去重上榜个股</div><div class="val">${l.n_stocks??"--"}</div><div class="sub">原始条款 ${l.n_records??"--"}（同股多条款合并）</div></div>
-    <div class="kpi"><div class="lab">龙虎榜净买额合计</div><div class="val ${cls(l.net_total_yi)}">${signed(l.net_total_yi)}<span style="font-size:13px">亿</span></div><div class="sub">买入席位-卖出席位</div></div>
-    <div class="kpi"><div class="lab">净买入为正家数</div><div class="val up">${l.n_positive??"--"}</div><div class="sub">占上榜 ${l.n_stocks?f1(l.n_positive/l.n_stocks*100):"--"}%</div></div>
-    <div class="kpi"><div class="lab">机构席位现身</div><div class="val">${(l.org||[]).length}</div><div class="sub">机构专用席位买卖</div></div>
-  </div>
-  <div class="panel" style="margin-top:14px"><h3>龙虎榜净买/净卖 Top5 对比</h3><div class="chart" id="chart-lhb" style="height:330px"></div></div>
-  <div class="panel lhb-wide" style="margin-top:14px"><h3 class="up">▲ 净买入 Top5（全宽展示 · 题材归因列复核填写）</h3>
-    <div class="tbl-wrap"><table><thead><tr><th>代码</th><th>名称</th><th class="r">涨跌%</th><th class="r">净买亿</th><th class="r">买入</th><th class="r">卖出</th><th class="r">席位结构</th><th>上榜原因</th><th>题材归因(人工)</th></tr></thead>
-    <tbody>${(l.buy_top5||[]).map(x=>lhbRow(x,"buy")).join("")}</tbody></table></div></div>
-  <div class="panel lhb-wide" style="margin-top:14px"><h3 class="down">▼ 净卖出 Top5（信号：涨停出货/跌停出逃/高位滞涨）</h3>
-    <div class="tbl-wrap"><table><thead><tr><th>代码</th><th>名称</th><th class="r">涨跌%</th><th class="r">净卖亿</th><th class="r">买入</th><th class="r">卖出</th><th class="r">席位结构</th><th>上榜原因</th><th>出货信号(人工)</th></tr></thead>
-    <tbody>${(l.sell_top5||[]).map(x=>lhbRow(x,"sell")).join("")}</tbody></table></div></div>
-  <div class="grid g2" style="margin-top:14px">
-    <div class="panel"><h3>机构专用席位明细（点击表头可排序，类Excel）</h3>
-      <div class="tbl-wrap"><table><thead><tr><th>代码</th><th>名称</th>${orgTh("涨跌%","chg")}${orgTh("买次","buy_times")}${orgTh("卖次","sell_times")}${orgTh("机构买亿","buy_yi")}${orgTh("机构卖亿","sell_yi")}${orgTh("净亿","net_abs")}</tr></thead>
-      <tbody id="orgTbody">${orgTbodyHtml()}</tbody></table></div>
-      <div class="note-src">点击「涨跌%/买次/卖次/机构买亿/机构卖亿/净亿」表头，可在 高→低 / 低→高 间切换；默认按净买卖绝对值排序。</div></div>
-    <div class="panel"><h3>龙虎榜 ∩ 连板梯队</h3><div class="lb-stocks" style="margin:6px 0">${ov}</div>
-      <div class="manual" data-field="lhb_interp" style="margin-top:10px"><span class="mlab">人工 · 游资进攻vs出货解读</span>
-      <div class="view-text" data-view="lhb_interp"></div></div></div>
-  </div>`}
