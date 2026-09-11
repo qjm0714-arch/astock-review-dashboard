@@ -153,7 +153,7 @@ function mdTable(head,rows){return `| ${head.join(" | ")} |\n|${head.map(()=>"--
 function buildMarkdown(){
   const im=idxMap(),cr=R.crowding,tmt=R.tmt,fg=R.feargreed,lm=R.limit,L=[];
   const n=notes();const NT=(k,f)=>noteText(n[k])||(f||"（待复核补充）");
-  L.push(`# A股每日复盘 ${R.meta.date}`,"",n.headline||">（待填一句话定调）","");
+  L.push(`# A股每日复盘 ${R.meta.date}`,"",n.headline||">（待填一句话定调）","","");
   // 风格与情绪速览
   const st=R.style,emo=R.emotion?.latest,zp=R.zt_prev;
   if(st)L.push(`风格四象限：上证50 ${signed(st.quadrants?.find(q=>q.index==="上证50")?.chg)}% / 沪深300 ${signed(st.quadrants?.find(q=>q.index==="沪深300")?.chg)}% / 创业板 ${signed(st.quadrants?.find(q=>q.index==="创业板指")?.chg)}% / 科创50 ${signed(st.quadrants?.find(q=>q.index==="科创50")?.chg)}%；科创50-上证50剪刀差 ${signed(st.scissor_kc_sz50)} pct。`,"");
@@ -245,7 +245,7 @@ function bindUI(){
     else{const b=$("#saveNotesBtn");if(b)b.remove();persistDraft()}
     bindManualEditable();toast(state.review?"复核模式：可编辑所有琥珀色区域":"已退出复核，编辑已暂存本地")
   };
-  $("#exportMdBtn").onclick=()=>{const t=buildMarkdown();download(`复盘_${state.date}.md`,t,"text/markdown;charset=utf-8");$("#modalText").value=t;};
+  $("#exportMdBtn").onclick=()=>{const t=buildMarkdown();download(`复盘_${state.date}.md`,t,"text/markdown;charset=utf-8";$("#modalText").value=t;};
   $("#exportTxtBtn").onclick=()=>{const t=buildPlainText();copyText(t);download(`复盘公众号_${state.date}.txt`,t)};
   $("#exportHtmlBtn").onclick=exportHtmlSnapshot;
   $("#loadFileBtn").onclick=()=>$("#fileInput").click();
