@@ -1,3 +1,27 @@
+function poolCarryHtml(){
+  const c=R.pool_carry; if(!c||!c.prev_date) return "";
+  const track=R.notes?.pool_track||{};
+  const actCls=a=>/止损|移出|剔除/.test(a)?"down":(/止盈/.test(a)?"gold":/持有|继续|观察/.test(a)?"up":"");
+  const actBadge=a=>a?`<span class="pact ${actCls(a)}">${esc(a)}</span>`:'<span class="pact pending">待复核</span>';
+  let body;
+  if(!c.rows.length){
+    body=`<div class="muted" style="padding:8px 2px">上一交易日（${esc(c.prev_date)}）未留存带个股代码的「次日入池」，今日无逐只闭环标的；滚动闭环自今日 pool_new 起，下一交易日收盘后自动在此逐只复盘（继续观察 / 持有 / 止损移出 / 止盈 / 移出）。</div>`;
+  }else{
+    body=`<div class="tbl-wrap"><table><thead><tr><th>名称(代码)</th><th>入选日</th><th>入选逻辑</th><th class="r">今日涨跌%</th><th class="r">主力净亿</th><th>处置</th><th>处置依据</th></tr></thead><tbody>
+    ${c.rows.map(x=>{const t=track[x.code]||{};return `<tr>
+      <td style="white-space:nowrap"><b>${esc(x.name)}</b> <span class="code">${esc(x.code)}</span>${x.industry?`<div class="muted" style="font-size:11px">${esc(x.industry)}</div>`:""}</td>
+      <td class="num">${esc(x.from_date)}</td>
+      <td style="white-space:normal;min-width:200px">${esc(x.reason)}</td>
+      <td class="r num ${cls(x.today_chg)}">${x.today_chg==null?"--":signed(x.today_chg)}</td>
+      <td class="r num ${cls(x.today_main_yi)}">${x.today_main_yi==null?"--":signed(x.today_main_yi)}</td>
+      <td style="white-space:nowrap">${actBadge(t.action)}</td>
+      <td style="white-space:normal;min-width:180px">${t.note?esc(t.note):'<span class="muted">--</span>'}</td></tr>`}).join("")}
+    </tbody></table></div>`;
+  }
+  return `<div class="panel" style="margin-bottom:14px"><h3>候选池滚动闭环 · ${esc(c.prev_date)} 入池 → 今日逐只处置</h3>
+    ${body}
+    <div class="note-src">滚动规则：每个交易日收盘后，对上一交易日「次日入池 pool_new」逐只回答——①是否继续拿着/观察；②是否止损或移出观察池；③是否止盈。人工处置写入 notes.pool_track[代码]={action,note}；处置完成后再生成今日新 pool_new，循环往复。</div></div>`;
+}
 function renderMyPool(){
   const pool=loadPool();
   const groups=["核心观察","弹性","回避"];
