@@ -91,7 +91,7 @@ function fiveDimScores(){
   circ.forEach((c,i)=>{const m=t.match(new RegExp(c+"[^\\d]{0,10}(\\d{1,2})\\s*\\/\\s*20"));if(m)vals[i]=parseInt(m[1],10);});
   if(vals[4]==null)vals[4]=leaderScoreNum();
   for(let i=0;i<4;i++)if(vals[i]==null)vals[i]=auto.vals[i];
-  const human=circ.every((c,i)=>new RegExp(c+"[^\\d]{0,10}\\d{1,2}\\s*\\/\\s*20").test(t));
+  const human=circ.every((c,i)=>new RegExp(c+"[^\d]{0,10}\\d{1,2}\\s*\\/\\s*20").test(t));
   const total=vals.reduce((a,b)=>a+(b||0),0);
   return {vals,maxLB:auto.maxLB,totalAuto:auto.totalAuto,total,human};
 }
