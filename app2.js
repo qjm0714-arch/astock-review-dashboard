@@ -1,3 +1,134 @@
+function renderBias(){
+  const B=R.bias;
+  if(!B||!B.indices)return "";
+  const ID=B.indices;
+  // ① 三指数结论KPI卡
+  let boxes="";
+  IB_NMS.forEach(nm=>{
+    const it=ID[nm];if(!it)return;
+    const bt60=ibBest(it.th_buy60),bt233=ibBest(it.th_buy233),t60=it.top60||{},t233=it.top233||{};
+    const rmt=(bt,b)=>{const r=ibRm(bt,b);if(r==null)return "—";return r<0?`<b class="down">还需跌 ${Math.abs(r).toFixed(1)}%</b>`:'<b class="up">已在抄底区</b>'};
+    const w60=bt60?`${bt60.h10.win}% / ${bt60.h20.win}%`:"—",w233=bt233?`${bt233.h10.win}% / ${bt233.h20.win}%`:"—";
+    const sell=t60.best_th!=null?`逃顶参考：60日 ≥+${t60.best_th}% 后20日下跌率 ${t60.w20}%`:"逃顶参考：无有效逃顶点（强趋势乖离可放大）";
+    boxes+=`<div class="kpi ib-kpi"><div class="lab"><b>${esc(nm)}</b> · 距均线乖离率</div>
+      <div class="ib-big">60日 <span class="${cls(it.bias60)}">${ibF(it.bias60)}</span> ｜ 233日 <span class="${cls(it.bias233)}">${ibF(it.bias233)}</span></div>
+      <div class="sub">历史分位：60日 ${it.pct60}% · 233日 ${it.pct233}%（越低越超跌）</div>
+      <div class="sub">60日抄底点 ${bt60?bt60.th+"%":"—"}：${rmt(bt60,it.bias60)} · 10/20日上涨率 ${w60}</div>
+      <div class="sub">233日抄底点 ${bt233?bt233.th+"%":"—"}：${rmt(bt233,it.bias233)} · 10/20日上涨率 ${w233}</div>
+      <div class="sub">顶部参考：60日90分位 +${t60.p90??"—"}% · 233日 +${t233.p90??"—"}% · 5年最高60日 +${t60.max??"—"}%</div>
+      <div class="sub">${sell}</div></div>`;
+  });
+  // ② 每日监测表
+  let mrows="";
+  IB_NMS.forEach(nm=>{const it=ID[nm];if(!it)return;
+    [["MA60",it.bias60,it.min60,it.max60,it.pct60],["MA233",it.bias233,it.min233,it.max233,it.pct233]].forEach(a=>{
+      const [lb,b,mn,mx,pc]=a,[pos,pk]=ibPos(pc);
+      mrows+=`<tr><td>${esc(nm)}</td><td class="num">${lb}</td><td class="num ${cls(b)}"><b>${ibF(b)}</b></td>
+        <td class="num">${pc}%</td><td>${badge(pos,pk)}</td><td class="num">${ibF(mn)}</td><td class="num">${ibF(mx)}</td></tr>`;
+    });
+  });
+  // ③ 结论·距抄底点多远
+  let clines="";
+  IB_NMS.forEach(nm=>{const it=ID[nm];if(!it)return;
+    const bt=ibBest(it.th_buy60),r=ibRm(bt,it.bias60),t=it.top60||{};
+    const topSeg=t.best_th!=null
+      ?`顶部规律：5年60日正乖离90分位 <b>+${t.p90}%</b>、最高 +${t.max}%；乖离 <b>≥+${t.best_th}%</b> 后10日下跌率 <b>${t.w10}%</b>、20日 <b>${t.w20}%</b>（两期均&gt;50%，卖出胜率高）。`
+      :`顶部规律：5年60日正乖离90分位 <b>+${t.p90}%</b>、最高 +${t.max}%；但<b>未找到有效逃顶点</b>——强趋势中乖离可持续放大，需配合趋势/量能。`;
+    let line;
+    if(!bt||r==null)line=`历史样本不足，暂不给抄底结论。${topSeg}`;
+    else if(r>=0)line=`当前60日乖离 <b>${ibF(it.bias60)}</b> 已进入历史高胜率抄底区（阈值 ${bt.th}%），此位买入10日上涨率 <b>${bt.h10.win}%</b> / 20日 <b>${bt.h20.win}%</b>，可分批布局。${topSeg}`;
+    else line=`当前60日乖离 <b>${ibF(it.bias60)}</b>（分位 ${it.pct60}%），距最优抄底点 ${bt.th}% 还需跌 <b class="down">${Math.abs(r).toFixed(1)}%</b>；到位后10日上涨率 <b>${bt.h10.win}%</b>（均 ${ibF(bt.h10.avg)}）/ 20日 <b>${bt.h20.win}%</b>（均 ${ibF(bt.h20.avg)}）。${topSeg}`;
+    clines+=`<div class="ib-cline"><b class="ib-cname">${esc(nm)}</b>：${line}</div>`;
+  });
+  // ④ 胜率摘要表（每指数抄底+逃顶各一行）
+  let srows="";
+  IB_NMS.forEach(nm=>{const it=ID[nm];if(!it)return;
+    const bt=ibBest(it.th_buy60),t=it.top60||{};
+    if(bt){const v=(bt.h10.win>=60&&bt.h20.win>=60)?"✓ 有效":"样本内";
+      srows+=`<tr><td>${esc(nm)}</td><td><span class="up">抄底</span></td><td class="num">60日 ≤ ${bt.th}%</td>
+        <td class="up">上涨概率 ${bt.h10.win}%</td><td class="up">上涨概率 ${bt.h20.win}%</td>
+        <td class="num">${ibF(bt.h10.avg)} / ${ibF(bt.h20.avg)}</td><td>${v}</td></tr>`;}
+    if(t.best_th!=null)srows+=`<tr><td>${esc(nm)}</td><td><span class="down">逃顶</span></td><td class="num">60日 ≥ ${t.best_th}%</td>
+        <td class="down">下跌概率 ${t.w10}%</td><td class="down">下跌概率 ${t.w20}%</td><td class="num">—</td><td>✓ 有效（两期&gt;50%）</td></tr>`;
+    else srows+=`<tr><td>${esc(nm)}</td><td class="muted">逃顶</td><td class="num">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td><td class="muted">无有效逃顶点</td></tr>`;
+  });
+  const src0=(ID["上证指数"]||{}).src||"—";
+  return `<div class="section" style="margin-top:14px"><div class="sec-head"><span class="sec-no">1B</span><h2>指数乖离率监测（MA60 / MA233 · 抄底逃顶）</h2><span class="tag">近5年 ${esc(B.window_start||"")} 起 · ${esc(B.date||"")}</span></div><div class="sec-body">
+    <div class="grid g3">${boxes}</div>
+    <div class="note-src">口径：乖离率 =(收盘−均线)/均线×100%；历史窗口近5年（${esc(B.window_start||"")} 起）；取数源 ${esc(src0)}；胜率=持有到期收红占比，信号间不重叠（持有期内不重复触发）；「最优抄底点」=历史胜率≥70%且样本≥5的最浅阈值。红=正乖离（偏贵），绿=负乖离（便宜）。</div>
+    <div class="grid g2" style="margin-top:12px">
+      <div class="panel"><h3>每日监测（三指数 × MA60/MA233）</h3><div class="tbl-wrap"><table>
+        <thead><tr><th>指数</th><th>均线</th><th class="r">当前乖离</th><th class="r">历史分位</th><th>位置</th><th class="r">5年最低</th><th class="r">5年最高</th></tr></thead>
+        <tbody>${mrows}</tbody></table></div></div>
+      <div class="panel"><h3>结论 · 距抄底点还有多远</h3><div class="ib-concl">${clines}</div></div>
+    </div>
+    <div class="panel" style="margin-top:14px"><h3>胜率摘要（最优抄底点 / 逃顶点）</h3><div class="tbl-wrap"><table>
+      <thead><tr><th>指数</th><th>方向</th><th class="r">乖离阈值(MA60)</th><th class="r">10日后概率</th><th class="r">20日后概率</th><th class="r">均值(10/20日)</th><th>判定</th></tr></thead>
+      <tbody>${srows}</tbody></table></div></div>
+    <div class="panel" style="margin-top:14px"><h3>三指数乖离率走势（纯乖离 · MA60橘实线 / MA233紫虚线 · 近5年，自动标注历史极值）</h3>
+      <div class="chart" id="chart-ib-上证指数" style="height:380px"></div>
+      <div class="chart" id="chart-ib-创业板指" style="height:380px;margin-top:16px"></div>
+      <div class="chart" id="chart-ib-科创50" style="height:380px;margin-top:16px"></div>
+    </div>
+  </div></div>`;
+}
+
+function renderMarket(){
+  const rows=(R.indices||[]).map(x=>`<tr>
+    <td>${x.name}</td><td class="r num">${f2(x.close)}</td>
+    <td class="r num ${cls(x.chg_pct)}">${arrow(x.chg_pct)} ${signed(x.chg_pct)}</td>
+    <td class="r num">${yiWan(x.amount_yi)}</td><td class="r num">${f2(x.turnover)}%</td>
+    <td class="r num ${cls(x.amplitude)}">${f2(x.amplitude)}</td>
+    <td class="r num">${f2(x.high)}</td><td class="r num">${f2(x.low)}</td></tr>`).join("");
+  const uh=(R.hist&&R.hist.updown)||[];const prev=uh.length>=2?uh[uh.length-2]:null;
+  const cmp=(a,b,fmt)=>{if(!a||b==null)return "--";const d=a-b;return `<span class="${cls(d)}">${d>0?"+":""}${fmt?fmt(d):d}</span>`};
+  const techCards=(R.tech60||[]).map(t=>{
+    const [g,k]=techBadge(t.grade);
+    return `<div class="panel"><h3>${t.name} · 60分钟 ${badge(g,k)}</h3>
+      <div class="kvline"><span class="k">最新/时间</span><span class="v num">${f2(t.price)} · ${esc(t.t)}</span></div>
+      <div class="kvline"><span class="k">MA55</span><span class="v num">${f2(t.ma55)}（${t.above?'<span class="up">站上 ▲</span>':'<span class="down">跌破 ▼</span>'}，偏离 ${signed(t.dev)}%）</span></div>
+      <div class="kvline"><span class="k">DIF/DEA</span><span class="v num">${f2(t.dif)} / ${f2(t.dea)}（零轴${t.zero_axis}方，柱 ${signed(t.bar)}，前柱 ${signed(t.bar_prev)}）</span></div>
+      <div class="kvline"><span class="k">近4根收盘</span><span class="v num">${(t.last4_closes||[]).join(" → ")}</span></div>
+      <div class="chart sm" id="kline-${t.name}" style="height:290px;min-height:290px;margin-top:8px"></div>
+    </div>`}).join("");
+  return `<div class="grid g2">
+    <div class="panel"><h3>核心指数总览（东财+新浪60分K双源）</h3>
+      <div class="tbl-wrap"><table><thead><tr><th>指数</th><th class="r">收盘</th><th class="r">涨跌幅%</th>
+      <th class="r">成交额亿</th><th class="r">换手%</th><th class="r">振幅%</th><th class="r">最高</th><th class="r">最低</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+      <div class="note-src">全市场成交额=上证综指(沪)+深证综指(深)+北交所个股合计，与全部个股求和交叉偏差&thinsp;0.5%内。</div>
+    </div>
+    <div class="panel"><h3>指数涨跌幅对比（红涨绿跌）</h3><div class="chart" id="chart-idxbar" style="height:300px"></div></div>
+  </div>
+  ${renderBias()}
+  <div class="grid g2" style="margin-top:14px">
+    <div class="panel"><h3>近20交易日涨跌家数 / 涨跌停</h3><div class="chart" id="chart-breadth" style="height:300px"></div></div>
+    <div class="panel"><h3>沪深300 收盘走势（叠加恐贪）</h3><div class="chart" id="chart-hs300fg" style="height:300px"></div>
+      <div class="note-src">柱=恐贪（左轴0-100，&lt;25极度恐惧），蓝线=沪深300（右轴）。</div></div>
+  </div>
+  <div class="panel" style="margin-top:14px"><h3>情绪指标环比（vs 前一交易日）</h3>
+    <div class="tbl-wrap"><table><thead><tr><th>指标</th><th class="r">今日</th><th class="r">昨日</th><th class="r">变化</th></tr></thead><tbody>
+      <tr><td>上涨家数</td><td class="r num">${f0(R.breadth?.up)}</td><td class="r num">${prev?f0(prev.up):"--"}</td><td class="r num">${prev?cmp(R.breadth.up,+prev.up,f0):"--"}</td></tr>
+      <tr><td>下跌家数</td><td class="r num">${f0(R.breadth?.down)}</td><td class="r num">${prev?f0(prev.down):"--"}</td><td class="r num">${prev?cmp(R.breadth.down,+prev.down,f0):"--"}</td></tr>
+      <tr><td>涨停</td><td class="r num up">${R.limit?.zt_count??"--"}</td><td class="r num">${prev?prev.lu:"--"}</td><td class="r num">${prev?cmp(R.limit.zt_count,+prev.lu,null):"--"}</td></tr>
+      <tr><td>跌停</td><td class="r num down">${R.limit?.dt_count??"--"}</td><td class="r num">${prev?prev.ld:"--"}</td><td class="r num">${prev?cmp(R.limit.dt_count,+prev.ld,null):"--"}</td></tr>
+    </tbody></table></div></div>
+
+  <div class="section" style="margin-top:14px"><div class="sec-head"><span class="sec-no">8</span><h2>三位一体 · 60分钟技术分析</h2><span class="tag">MA55 + MACD 五级定档</span></div><div class="sec-body">
+    <div class="note-src" style="margin-bottom:10px">MA55=近55根60分K收盘均值；DIF=EMA12-EMA26，DEA=DIF的9日EMA，柱=2×(DIF-DEA)。极强=站上MA55且DIF/DEA双正金叉；强=零轴上方金叉；中性=零轴缠绕；弱=零轴下方金叉收敛；极弱=跌破MA55且零轴下方死叉。</div>
+    <div class="grid g3">${techCards}</div>
+    <div style="margin-top:12px">${insightBlock("tech_detail","三位一体综合技术解读 · 总-分-总","prose")}</div>
+  </div></div>
+
+  <div class="grid g2" style="margin-top:14px">
+    ${insightBlock("key_levels","关键支撑 / 压力位（跌破/站上对应动作）","levels")}
+    ${insightBlock("triple","三重共振结论（技术面 × 情绪面 × 资金面）","prose")}
+  </div>`}
+
+/* ============================================================
+   P3 涨停梯队 + 昨日涨停今日反馈
+   ============================================================ */
+function fmtFbt(v){if(v==null||v==="")return "--";const s=String(v).padStart(6,"0");return `${s.slice(0,2)}:${s.slice(2,4)}`}
 function ladderStockTable(items){
   const H=(t,al)=>`<th class="${al||""} sort-th">${t}<span class="sarr">⇅</span></th>`;
   return `<div class="tbl-wrap"><table><thead><tr>${H("代码")}${H("名称")}${H("连板","r")}${H("涨幅%","r")}
@@ -85,155 +216,37 @@ function indRow(x){return `<tr><td>${esc(x.name)}</td><td class="r num ${cls(x.a
 function conceptRow(x){return `<tr><td>${esc(x.name)}</td><td class="r num ${cls(x.chg)}">${signed(x.chg)}%</td>
   <td class="r num">${yiWan(x.amount_yi)}</td><td class="r num up">${x.up}</td><td class="r num down">${x.down}</td>
   <td class="r num">${f1(x.up_ratio)}%</td><td style="white-space:normal;color:var(--ink3)">${esc(x.leader||"")}</td></tr>`}
-function renderBoards(){
-  const inds=R.industries||{},con=R.concepts||{},cr=R.crowding||{};
-  const top10=(cr.top10||[]).map((x,i)=>`<tr><td class="muted">${i+1}</td><td class="code">${x.code}</td><td>${esc(x.name)}</td>
-    <td style="white-space:normal;color:var(--ink3);font-size:11.5px">${esc(x.industry||"")}</td>
-    <td class="r num ${cls(x.chg)}">${signed(x.chg)}</td><td class="r num">${yiWan(x.amount_yi)}</td>
-    <td class="r num ${cls(x.main_yi)}">${signed(x.main_yi)}</td></tr>`).join("");
-  return `<div class="grid g2">
-    <div class="panel"><h3>东财细分行业 · 涨幅前5（等权平均涨跌幅）</h3>
-      <div class="tbl-wrap"><table><thead><tr><th>行业</th><th class="r">均涨幅%</th><th class="r">涨</th><th class="r">跌</th><th class="r">平</th><th class="r">成交亿</th><th class="r">主力净亿</th></tr></thead>
-      <tbody>${(inds.top5||[]).map(indRow).join("")}</tbody></table></div></div>
-    <div class="panel"><h3>东财细分行业 · 跌幅前5</h3>
-      <div class="tbl-wrap"><table><thead><tr><th>行业</th><th class="r">均涨幅%</th><th class="r">涨</th><th class="r">跌</th><th class="r">平</th><th class="r">成交亿</th><th class="r">主力净亿</th></tr></thead>
-      <tbody>${(inds.bottom5||[]).map(indRow).join("")}</tbody></table></div></div>
-  </div>
-  <div class="panel" style="margin-top:14px"><h3>行业涨跌幅条形（前5/后5）</h3><div class="chart" id="chart-indbar" style="height:330px"></div></div>
-  <div class="grid g2" style="margin-top:14px">
-    <div class="panel"><h3>概念板块 · 红榜（上涨家数占比，已剔统计/泛题材，成分≥10）</h3>
-      <div class="tbl-wrap"><table><thead><tr><th>概念</th><th class="r">涨幅%</th><th class="r">成交亿</th><th class="r">涨</th><th class="r">跌</th><th class="r">上涨占比</th><th>领涨</th></tr></thead>
-      <tbody>${(con.red5||[]).map(conceptRow).join("")}</tbody></table></div>
-      <div class="note-src">红绿榜按板块内上涨家数占比排序，反映题材内部一致性。</div></div>
-    <div class="panel"><h3>概念板块 · 绿榜</h3>
-      <div class="tbl-wrap"><table><thead><tr><th>概念</th><th class="r">涨幅%</th><th class="r">成交亿</th><th class="r">涨</th><th class="r">跌</th><th class="r">上涨占比</th><th>领涨</th></tr></thead>
-      <tbody>${(con.green5||[]).map(conceptRow).join("")}</tbody></table></div></div>
-  </div>
-  <div class="panel" style="margin-top:14px"><h3>全市场成交额 Top10 个股（拥挤度前5%构成）</h3>
-    <div class="tbl-wrap"><table><thead><tr><th>#</th><th>代码</th><th>名称</th><th>行业</th><th class="r">涨跌幅%</th><th class="r">成交额亿</th><th class="r">主力净亿</th></tr></thead>
-    <tbody>${top10}</tbody></table></div></div>
-  <div class="manual" style="margin-top:14px" data-field="industry_rotation"><span class="mlab">人工 · 板块轮动与题材归因</span>
-    <div class="view-text" data-view="industry_rotation"></div></div>`}
-
 /* ============================================================
-   P5 资金流向
+   9-15 移植：模块1 60日新高板块统计 / 模块2 5日板块轮动（热门板块页顶部）
    ============================================================ */
-function fundRow(x){return `<tr><td class="code">${x.code}</td><td>${esc(x.name)}</td>
-  <td style="color:var(--ink3);white-space:normal;font-size:11.5px">${esc(x.industry||"")}</td>
-  <td class="r num ${cls(x.chg)}">${signed(x.chg)}</td><td class="r num">${yiWan(x.amount_yi)}</td>
-  <td class="r num ${cls(x.main_yi)}"><b>${signed(x.main_yi)}</b></td><td class="r num ${cls(x.big_yi)}">${signed(x.big_yi)}</td>
-  <td class="r num ${cls(x.mid_yi)}">${signed(x.mid_yi)}</td><td class="r num ${cls(x.small_yi)}">${signed(x.small_yi)}</td></tr>`}
-function renderFunds(){
-  const cr=R.crowding||{},tmt=R.tmt||{},f=R.funds||{},mg=R.margin,nb=R.northbound||{};
-  const [cz,ck]=crowdZone(cr.ratio),tp=tmt.parts||{};
-  const cont=R.continuity||{rows:[]};
-  const contRows=cont.rows.slice().sort((a,b)=>(b.today_yi??0)-(a.today_yi??0)).map(x=>{const[t,k]=contTag(x.tag);return `<tr><td>${esc(x.name)}</td>
-    <td class="r num ${cls(x.prev_yi)}">${signed(x.prev_yi)}</td><td class="r num ${cls(x.today_yi)}"><b>${signed(x.today_yi)}</b></td>
-    <td class="r num ${cls(x.chg_yi)}">${signed(x.chg_yi)}</td><td>${badge(t,k)}</td></tr>`}).join("");
-  const fh=(R.fund_hist||[]).slice(-10);
-  // 两融近20交易日滚动（末值为最新T-1）；主要指数成交额环比表（替代长期不更新的北向卡，2026-09-10邱总）
-  const mgh=(R.margin_hist||[]).slice(-20), mgl=mgh[mgh.length-1];
-  const mgTitle=(mgl&&mg)?`两融余额（近20交易日滚动）· ${mgl.date}(T-1) ${yiWan(mgl.total_yi)}亿`
-      +(mgl.mom_pct!=null?` · 环比 <b class="${cls(mgl.mom_pct)}">${arrow(mgl.mom_pct)}${signed(mgl.mom_pct)}%（${signed(mgl.mom_yi)}亿）</b>`:"")
-      :(mg?`两融余额（T-1 ${mg.date}）${yiWan(mg.total_yi)}亿`:"两融余额（近20交易日滚动）");
-  const iaRows=(R.index_amount||[]).map(x=>`<tr><td>${esc(x.name)}</td>
-      <td class="r num">${yiWan(x.amount_yi)}</td>
-      <td class="r num ${cls(x.amount_mom_pct)}">${x.amount_mom_pct==null?"--":arrow(x.amount_mom_pct)+signed(x.amount_mom_pct)+"%"}</td>
-      <td class="r num ${cls(x.chg_pct)}">${signed(x.chg_pct)}%</td></tr>`).join("");
-  return `<div class="kpi-strip">
-    <div class="kpi"><div class="lab">全市场拥挤度（前5%成交占比）</div><div class="val">${f2(cr.ratio)}%</div><div class="sub">${badge(cz,ck)} 前${cr.topn}/${cr.total_n}只 · ${yiWan(cr.top5_yi)}/${yiWan(cr.total_yi)}亿</div></div>
-    <div class="kpi"><div class="lab">TMT 成交额占比</div><div class="val">${f2(tmt.ratio)}%</div><div class="sub">${yiWan(tmt.amount_yi)}亿（电子+通信+计算机+传媒）</div></div>
-    <div class="kpi"><div class="lab">全市场成交额</div><div class="val">${yiWan(cr.total_yi)}<span style="font-size:13px">亿</span></div><div class="sub">沪深${yiWan(cr.sh_sz_yi)}+北交${yiWan(cr.bj_yi)}</div></div>
-    <div class="kpi"><div class="lab">主力资金净额合计</div><div class="val ${cls(f.main_total_yi)}">${signed(f.main_total_yi)}<span style="font-size:13px">亿</span></div><div class="sub">超大单+大单（东财）</div></div>
-  </div>
-  <div class="panel" style="margin-top:14px"><h3>拥挤度 / TMT 走势（35偏高·40危险抱团·45极度·50极端）</h3>
-    <div class="chart" id="chart-crowd" style="height:320px"></div>
-    <div class="legend-inline"><span>电子 ${yiWan(tp["电子"])} · 通信 ${yiWan(tp["通信"])} · 计算机 ${yiWan(tp["计算机"])} · 传媒 ${yiWan(tp["传媒"])} 亿</span></div>
-  </div>
-  <div class="grid g2" style="margin-top:14px">
-    <div class="panel"><h3>行业主力净流入 Top6</h3><div class="tbl-wrap"><table><thead><tr><th>行业</th><th class="r">均涨幅%</th><th class="r">成交亿</th><th class="r">主力净亿</th></tr></thead>
-      <tbody>${(R.industries.in_top||[]).slice(0,6).map(x=>`<tr><td>${esc(x.name)}</td><td class="r num ${cls(x.avg_chg)}">${signed(x.avg_chg)}</td><td class="r num">${yiWan(x.amount_yi)}</td><td class="r num up">+${yiWan(x.main_net_yi)}</td></tr>`).join("")}</tbody></table></div></div>
-    <div class="panel"><h3>行业主力净流出 Top6</h3><div class="tbl-wrap"><table><thead><tr><th>行业</th><th class="r">均涨幅%</th><th class="r">成交亿</th><th class="r">主力净亿</th></tr></thead>
-      <tbody>${(R.industries.out_top||[]).slice(0,6).map(x=>`<tr><td>${esc(x.name)}</td><td class="r num ${cls(x.avg_chg)}">${signed(x.avg_chg)}</td><td class="r num">${yiWan(x.amount_yi)}</td><td class="r num down">${yiWan(x.main_net_yi)}</td></tr>`).join("")}</tbody></table></div></div>
-  </div>
-  <div class="panel" style="margin-top:14px"><h3>行业资金两日连续性（vs ${esc(cont.prev_date||"前一交易日")}，识别持续流入/流出与切换）</h3>
-    ${contRows?`<div class="tbl-wrap"><table><thead><tr><th>行业</th><th class="r">前日主力净亿</th><th class="r">今日主力净亿</th><th class="r">变化</th><th class="r">连续性</th></tr></thead><tbody>${contRows}</tbody></table></div>`
-      :'<div class="muted">连续性需连续两个交易日完整归档，明日自动生效。</div>'}
-    <div class="note-src">按今日主力净额绝对值前12行业与前一交易日对比：连续净流入=两日皆正，流出转流入=今日转正（潜在新主线），反之为切换信号。</div></div>
-  <div class="panel" style="margin-top:14px"><h3>全市场主力资金净额序列（近10个交易日·滚动，红正绿负；每日append并剔除最旧一日）</h3>
-    ${fh.length>=2?`<div class="chart sm" id="chart-fundhist" style="height:240px;min-height:240px"></div>`:'<div class="muted">序列累积中（需≥2个交易日）</div>'}
-    <div class="note-src">口径：当日为全A个股主力净额(超大单+大单,含北证)自算；历史日为东财沪深指数级主力净流入合计(与自算差&lt;0.6%)，滚动只保留最近10个交易日。</div></div>
-  <div class="panel" style="margin-top:14px">
-    <div style="display:flex;gap:8px;margin-bottom:10px"><h3 style="margin:0">个股主力资金 Top10</h3>
-      <button class="tab-btn on" data-fundtab="in" style="margin-left:auto">净流入</button>
-      <button class="tab-btn" data-fundtab="out">净流出</button></div>
-    <div class="tbl-wrap"><table><thead><tr><th>代码</th><th>名称</th><th>行业</th><th class="r">涨跌%</th><th class="r">成交亿</th>
-      <th class="r">主力净</th><th class="r">大单</th><th class="r">中单</th><th class="r">小单</th></tr></thead>
-      <tbody id="fundTbody"></tbody></table></div></div>
-  <div class="grid g3" style="margin-top:14px">
-    <div class="panel"><h3>${mgTitle}</h3>
-      ${mgh.length>=2?`<div class="chart sm" id="chart-margin" style="height:212px;min-height:212px"></div>`:'<div class="muted">两融历史累积中（需≥2个交易日）</div>'}
-      ${mg?`<div class="kvline" style="margin-top:6px"><span class="k">融资/融券/融资买入</span><span class="v num">${yiWan(mg.rzye_yi)} / ${yiWan(mg.rqye_yi)} / ${yiWan(mg.rzmre_yi)} 亿</span></div>
-      <div class="note-src">交易所T-1披露口径，折线为两融合计（融资+融券）近20个交易日滚动。</div>`:""}</div>
-    <div class="panel"><h3>主要指数成交额（环比昨日 · 今日涨跌幅）</h3>
-      <div class="tbl-wrap"><table><thead><tr><th>指数</th><th class="r">今日成交亿</th><th class="r">较昨日</th><th class="r">今日涨跌</th></tr></thead>
-      <tbody>${iaRows||'<tr><td colspan=4 class=muted>需连续两日归档</td></tr>'}</tbody></table></div>
-      <div class="note-src">北向净买入自2024年8月起交易所永久停披露、本机亦无稳定成交额口径，故以主要指数成交额环比表替代，反映各市场量能缩放；不代表资金方向。</div></div>
-    <div class="manual" data-field="omo"><span class="mlab">人工 · 央行OMO/中间价</span><div class="view-text" data-view="omo" style="margin-top:6px"></div></div>
-  </div>`}
-
-/* ============================================================
-   P6 龙虎榜
-   ============================================================ */
-function seatCell(x){
-  const p=[];
-  if(x.buy_inst||x.sell_inst)p.push(`机构买${x.buy_inst||0}/卖${x.sell_inst||0}`);
-  if(x.buy_north||x.sell_north)p.push(`北向买${x.buy_north||0}/卖${x.sell_north||0}`);
-  const txt=p.length?p.join(" "):`普通席位买${x.buy_n||0}/卖${x.sell_n||0}`;
-  return `<td class="r num" title="${esc(x.seat_text||"")}" style="font-size:11px;white-space:normal;min-width:96px">${txt}</td>`}
-function lhbRow(x,side){const themeField=side==="buy"?"lhb_theme":"lhb_signal";
-  return `<tr><td class="code">${x.code}</td><td><b>${esc(x.name)}</b></td>
-  <td class="r num ${cls(x.chg)}">${signed(x.chg)}</td><td class="r num ${cls(x.net_yi)}"><b>${signed(x.net_yi,3)}</b></td>
-  <td class="r num">${yiWan(x.buy_yi,2)}</td><td class="r num">${yiWan(x.sell_yi,2)}</td>${seatCell(x)}
-  <td style="white-space:normal;min-width:180px;font-size:11.5px;color:var(--ink2)">${esc(x.reason||"")}</td>
-  <td class="manual-cell" data-field="${themeField}" data-code="${x.code}" style="white-space:normal;min-width:120px"></td></tr>`}
-// 通用类Excel列排序：点击 th.sort-th 即对所在表按该列排序（数值优先 td[data-v]，否则解析文本；首次降序，再点升序）
-function bindColSort(){
-  document.addEventListener("click",function(e){
-    const th=e.target.closest("th.sort-th");if(!th)return;
-    const table=th.closest("table");if(!table||!table.tBodies.length)return;
-    const ci=Array.prototype.indexOf.call(th.parentNode.children,th);
-    const desc=th.dataset.dir!=="desc";
-    Array.prototype.forEach.call(th.parentNode.children,x=>{if(x!==th){delete x.dataset.dir;x.classList.remove("active");
-      const a=x.querySelector(".sarr");if(a)a.textContent="⇅";}});
-    th.dataset.dir=desc?"desc":"asc";th.classList.add("active");
-    const tb=table.tBodies[0];
-    const numval=td=>{if(!td)return NaN;if(td.dataset.v!=null&&td.dataset.v!==""){const n=parseFloat(td.dataset.v);if(!isNaN(n))return n;}
-      const n=parseFloat((td.textContent||"").replace(/[+,%\s板只]/g,""));return isNaN(n)?NaN:n;};
-    const rows=Array.prototype.slice.call(tb.rows);
-    rows.sort((a,b)=>{const va=numval(a.cells[ci]),vb=numval(b.cells[ci]);
-      if(isNaN(va)||isNaN(vb)){const sa=a.cells[ci]?a.cells[ci].textContent:"",sb=b.cells[ci]?b.cells[ci].textContent:"";
-        return desc?sb.localeCompare(sa,"zh"):sa.localeCompare(sb,"zh");}
-      return desc?vb-va:va-vb;});
-    rows.forEach(r=>tb.appendChild(r));
-    const sa=th.querySelector(".sarr");if(sa)sa.textContent=desc?"▼":"▲";
-  });
-}
-function orgRow(x){return `<tr><td class="code">${x.code}</td><td><b>${esc(x.name)}</b></td>
-    <td class="r num ${cls(x.chg)}">${signed(x.chg)}</td><td class="r num">${x.buy_times}</td><td class="r num">${x.sell_times}</td>
-    <td class="r num up">${yiWan(x.buy_yi)}</td><td class="r num down">${yiWan(x.sell_yi)}</td>
-    <td class="r num ${cls(x.net_yi)}"><b>${signed(x.net_yi,3)}</b></td></tr>`}
-function orgSortVal(x,k){return ({chg:x.chg,buy_times:x.buy_times,sell_times:x.sell_times,buy_yi:x.buy_yi,sell_yi:x.sell_yi,net:x.net_yi,net_abs:Math.abs(x.net_yi||0)})[k]??0}
-function orgTbodyHtml(){
-  const arr=(R.lhb?.org||[]).slice().sort((a,b)=>orgSortState.desc?orgSortVal(b,orgSortState.key)-orgSortVal(a,orgSortState.key):orgSortVal(a,orgSortState.key)-orgSortVal(b,orgSortState.key));
-  return arr.map(orgRow).join("");
-}
-function orgTh(label,key){return `<th class="r sort-th ${orgSortState.key===key?"active":""}" data-orgsort="${key}">${label}<span class="sarr">${orgSortState.key===key?(orgSortState.desc?"▼":"▲"):"⇅"}</span></th>`}
-function bindOrgSort(){
-  $$("[data-orgsort]").forEach(th=>th.onclick=()=>{const k=th.dataset.orgsort;
-    if(orgSortState.key===k)orgSortState.desc=!orgSortState.desc;else{orgSortState.key=k;orgSortState.desc=true}
-    const tb=$("#orgTbody");if(tb)tb.innerHTML=orgTbodyHtml();
-    $$("[data-orgsort]").forEach(h=>{const on=h.dataset.orgsort===orgSortState.key;h.classList.toggle("active",on);
-      const a=h.querySelector(".sarr");if(a)a.textContent=on?(orgSortState.desc?"▼":"▲"):"⇅";});
-  });
+function renderNewHigh60(){
+  const nh=R.newhigh60; if(!nh||!nh.groups||!nh.groups.length) return "";
+  const leftRows=nh.left.map(g=>`<tr class="nh-brow" data-g="${esc(g.name)}">
+      <td><b>${esc(g.name)}</b></td>
+      <td class="r num" data-v="${g.n??''}">${g.n}</td>
+      <td class="r num ${cls(g.ind_pct)}" data-v="${g.ind_pct??''}">${g.ind_pct==null?'--':signed(g.ind_pct)}</td>
+      <td class="r num" data-v="${g.up_ratio??''}">${g.up_ratio==null?'--':f1(g.up_ratio)+'%'}</td>
+      <td class="r num" data-v="${g.amt_ratio??''}">${g.amt_ratio==null?'--':f2(g.amt_ratio)+'%'}</td>
+      <td class="r num ${cls(g.main_net)}" data-v="${g.main_net??''}">${g.main_net==null?'--':signed(f2(g.main_net))}</td></tr>`).join("");
+  const rightGroups=nh.groups.map(grp=>{
+    const head=`<tr class="nh-gh" data-g="${esc(grp.name)}"><td colspan="6"><span class="arw">▶</span>${esc(grp.name)}（${grp.n}只 · 点击展开/收起）</td></tr>`;
+    const rows=grp.rows.map((r,i)=>`<tr class="nh-irow ${i===0?'':'rest'}" data-g="${esc(grp.name)}" style="display:${i===0?'table-row':'none'}">
+      <td class="code">${r.code}</td><td><b>${esc(r.name)}</b></td>
+      <td class="r num ${cls(r.chg60)}" data-v="${r.chg60??''}">${r.chg60==null?'--':signed(r.chg60)}</td>
+      <td class="r num ${cls(r.chg)}">${r.chg==null?'--':signed(r.chg)}</td>
+      <td>${esc(grp.name)}</td><td class="nh-concept">${esc(r.concept||'')}</td></tr>`).join("");
+    return head+rows;}).join("");
+  return `<div class="panel" style="margin-bottom:14px"><div class="nm-head"><h3>60日新高板块统计</h3>
+    <span class="nm-sub">${esc(nh.date)} · 共 <b style="color:var(--blue)">${nh.total}</b> 只创60日新高（今日最高价&gt;过去60交易日最高价）；点左表行业联动展开右表分组，表头可点排序；每组默认只显示60日涨幅最高的一只</span></div>
+    <div class="nh-grid">
+      <div class="nh-wrap"><table><thead><tr>
+        <th class="sort-th">所属行业<span class="sarr">⇅</span></th>
+        <th class="r sort-th">数量<span class="sarr">⇅</span></th>
+        <th class="r sort-th">行业涨跌%<span class="sarr">⇅</span></th>
+        <th class="r sort-th">上涨占比<span class="sarr">⇅</span></th>
+        <th class="r sort-th">额占比<span class="sarr">⇅</span></th>
+        <th class="r sort-th">主力净亿<span class="sarr">⇅</span></th></tr></thead><tbody>${leftRows}</tbody></table></div>
+      <div class="nh-wrap"><table><thead><tr><th>代码</th><th>名称</th><th class="r">60日涨跌%</th><th class="r">今日%</th><th>行业</th><th>概念</th></tr></thead><tbody>${rightGroups}</tbody></table></div>
+    </div>
+    <div class="note-src">强度三指标：行业涨跌幅=申万一级当日；上涨占比=行业内上涨家数÷(涨+跌+平)；额占比=行业成交额÷31个申万一级合计（${f1(nh.mkt_yi)}亿）。60日涨跌幅=最新收盘÷62根日K首根−1（腾讯前复权）。</div></div>`;
 }
