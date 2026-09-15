@@ -41,6 +41,8 @@ function drawAllCharts(){
       {type:"bar",barWidth:16,data:ixv.map(v=>v>=0?{value:v,itemStyle:{color:UP}}:null),label:{show:true,position:"right",formatter:p=>signed(p.value)+"%",color:"#46566f",fontSize:11}},
       {type:"bar",barWidth:16,data:ixv.map(v=>v<0?{value:v,itemStyle:{color:DOWN}}:null),label:{show:true,position:"left",formatter:p=>signed(p.value)+"%",color:"#46566f",fontSize:11}}
     ]});
+  // 指数乖离率三图（纯乖离，容器id含中文）
+  if(R.bias&&R.bias.indices){IB_NMS.forEach(nm=>{const _d=R.bias.indices[nm];if(_d&&document.getElementById("chart-ib-"+nm))makeChart("chart-ib-"+nm,ibChartOpt(nm,_d));});}
   // 涨跌家数
   const uh=(R.hist?.updown)||[];
   makeChart("chart-breadth",{grid:{left:48,right:48,top:34,bottom:40},legend:{data:["上涨","下跌","涨停","跌停"],bottom:0,type:"scroll",textStyle:{fontSize:11}},
@@ -154,4 +156,3 @@ function switchFundTab(tab){
   tb.innerHTML=list.map(fundRow).join("");
   $$("[data-fundtab]").forEach(b=>b.classList.toggle("on",b.dataset.fundtab===tab))
 }
-
