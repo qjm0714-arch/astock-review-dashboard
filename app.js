@@ -251,7 +251,7 @@ function renderGlobal(){
           Object.entries(g.us_cross_em||{}).map(([k,v])=>`${k} ${f2(v.close)}(${signed(v.chg_pct)}%)`).join(" / ")||"--"}</div>
       </div>
       <div class="panel"><h3>全球大类资产六项（抓取时刻快照，历史日重跑为当时值）</h3>
-        <div class="tbl-wrap"><table><thead><tr><th>资产</th><th class="r">最新</th><th class="r">涨跌</th><th class="r">口径/备注</th></tr></thead>
+        <div class="tbl-wrap"><table><thead><tr><th>资产</th><th class="r">最新</th><th class="r">涨跌</th><th>口径/备注</th></tr></thead>
         <tbody>${m6rows}</tbody></table></div>
         <div class="note-src">VIX 为近月期货（现货无稳定免费自动源）；白银 ${f2(g.silver?.price)}。</div>
       </div>
@@ -275,58 +275,44 @@ function renderGlobal(){
 /* ============================================================
    P2 大盘分析(指数 + 三位一体60分 + 关键位)
    ============================================================ */
-function renderMarket(){
-  const rows=(R.indices||[]).map(x=>`<tr>
-    <td>${x.name}</td><td class="r num">${f2(x.close)}</td>
-    <td class="r num ${cls(x.chg_pct)}">${arrow(x.chg_pct)} ${signed(x.chg_pct)}</td>
-    <td class="r num">${yiWan(x.amount_yi)}</td><td class="r num">${f2(x.turnover)}%</td>
-    <td class="r num ${cls(x.amplitude)}">${f2(x.amplitude)}</td>
-    <td class="r num">${f2(x.high)}</td><td class="r num">${f2(x.low)}</td></tr>`).join("");
-  const uh=(R.hist&&R.hist.updown)||[];const prev=uh.length>=2?uh[uh.length-2]:null;
-  const cmp=(a,b,fmt)=>{if(!a||b==null)return "--";const d=a-b;return `<span class="${cls(d)}">${d>0?"+":""}${fmt?fmt(d):d}</span>`};
-  const techCards=(R.tech60||[]).map(t=>{
-    const [g,k]=techBadge(t.grade);
-    return `<div class="panel"><h3>${t.name} · 60分钟 ${badge(g,k)}</h3>
-      <div class="kvline"><span class="k">最新/时间</span><span class="v num">${f2(t.price)} · ${esc(t.t)}</span></div>
-      <div class="kvline"><span class="k">MA55</span><span class="v num">${f2(t.ma55)}（${t.above?'<span class="up">站上 ▲</span>':'<span class="down">跌破 ▼</span>'}，偏离 ${signed(t.dev)}%）</span></div>
-      <div class="kvline"><span class="k">DIF/DEA</span><span class="v num">${f2(t.dif)} / ${f2(t.dea)}（零轴${t.zero_axis}方，柱 ${signed(t.bar)}，前柱 ${signed(t.bar_prev)}）</span></div>
-      <div class="kvline"><span class="k">近4根收盘</span><span class="v num">${(t.last4_closes||[]).join(" → ")}</span></div>
-      <div class="chart sm" id="kline-${t.name}" style="height:290px;min-height:290px;margin-top:8px"></div>
-    </div>`}).join("");
-  return `<div class="grid g2">
-    <div class="panel"><h3>核心指数总览（东财+新浪60分K双源）</h3>
-      <div class="tbl-wrap"><table><thead><tr><th>指数</th><th class="r">收盘</th><th class="r">涨跌幅%</th>
-      <th class="r">成交额亿</th><th class="r">换手%</th><th class="r">振幅%</th><th class="r">最高</th><th class="r">最低</th></tr></thead>
-      <tbody>${rows}</tbody></table></div>
-      <div class="note-src">全市场成交额=上证综指(沪)+深证综指(深)+北交所个股合计，与全部个股求和交叉偏差&thinsp;0.5%内。</div>
-    </div>
-    <div class="panel"><h3>指数涨跌幅对比（红涨绿跌）</h3><div class="chart" id="chart-idxbar" style="height:300px"></div></div>
-  </div>
-  <div class="grid g2" style="margin-top:14px">
-    <div class="panel"><h3>近20交易日涨跌家数 / 涨跌停</h3><div class="chart" id="chart-breadth" style="height:300px"></div></div>
-    <div class="panel"><h3>沪深300 收盘走势（叠加恐贪）</h3><div class="chart" id="chart-hs300fg" style="height:300px"></div>
-      <div class="note-src">柱=恐贪（右轴0-100，&lt;25极度恐惧），线=沪深300。</div></div>
-  </div>
-  <div class="panel" style="margin-top:14px"><h3>情绪指标环比（vs 前一交易日）</h3>
-    <div class="tbl-wrap"><table><thead><tr><th>指标</th><th class="r">今日</th><th class="r">昨日</th><th class="r">变化</th></tr></thead><tbody>
-      <tr><td>上涨家数</td><td class="r num">${f0(R.breadth?.up)}</td><td class="r num">${prev?f0(prev.up):"--"}</td><td class="r num">${prev?cmp(R.breadth.up,+prev.up,f0):"--"}</td></tr>
-      <tr><td>下跌家数</td><td class="r num">${f0(R.breadth?.down)}</td><td class="r num">${prev?f0(prev.down):"--"}</td><td class="r num">${prev?cmp(R.breadth.down,+prev.down,f0):"--"}</td></tr>
-      <tr><td>涨停</td><td class="r num up">${R.limit?.zt_count??"--"}</td><td class="r num">${prev?prev.lu:"--"}</td><td class="r num">${prev?cmp(R.limit.zt_count,+prev.lu,null):"--"}</td></tr>
-      <tr><td>跌停</td><td class="r num down">${R.limit?.dt_count??"--"}</td><td class="r num">${prev?prev.ld:"--"}</td><td class="r num">${prev?cmp(R.limit.dt_count,+prev.ld,null):"--"}</td></tr>
-    </tbody></table></div></div>
-
-  <div class="section" style="margin-top:14px"><div class="sec-head"><span class="sec-no">8</span><h2>三位一体 · 60分钟技术分析</h2><span class="tag">MA55 + MACD 五级定档</span></div><div class="sec-body">
-    <div class="note-src" style="margin-bottom:10px">MA55=近55根60分K收盘均值；DIF=EMA12-EMA26，DEA=DIF的9日EMA，柱=2×(DIF-DEA)。极强=站上MA55且DIF/DEA双正金叉；强=零轴上方金叉；中性=零轴缠绕；弱=零轴下方金叉收敛；极弱=跌破MA55且零轴下方死叉。</div>
-    <div class="grid g3">${techCards}</div>
-    <div style="margin-top:12px">${insightBlock("tech_detail","三位一体综合技术解读 · 总-分-总","prose")}</div>
-  </div></div>
-
-  <div class="grid g2" style="margin-top:14px">
-    ${insightBlock("key_levels","关键支撑 / 压力位（跌破/站上对应动作）","levels")}
-    ${insightBlock("triple","三重共振结论（技术面 × 情绪面 × 资金面）","prose")}
-  </div>`}
-
 /* ============================================================
-   P3 涨停梯队 + 昨日涨停今日反馈
+   指数乖离率监测（MA60/MA233 · 抄底逃顶，2026-09-15 移植并增强）
+   数据=R.bias.indices[nm]（calc_bias.py 近5年1464日统计）；只画乖离不画价格
    ============================================================ */
-function fmtFbt(v){if(v==null||v==="")return "--";const s=String(v).padStart(6,"0");return `${s.slice(0,2)}:${s.slice(2,4)}`}
+function ibF(v){return v==null?"--":(v>=0?"+":"")+(+v).toFixed(2)+"%"}
+function ibBest(rows){ // 最优抄底点：h10胜率≥70且样本≥5的最浅阈值，退取样本≥5中胜率最高
+  if(!rows)return null;
+  let c=rows.filter(r=>r.h10&&r.h10.win!=null&&r.h10.win>=70&&r.h10.n>=5);
+  if(c.length)return c.reduce((a,b)=>b.th>a.th?b:a);
+  let c2=rows.filter(r=>r.h10&&r.h10.win!=null&&r.h10.n>=5);
+  if(c2.length)return c2.reduce((a,b)=>b.h10.win>a.h10.win?b:a);
+  return null;
+}
+function ibRm(bt,b){return bt?(bt.th-b)/(1+b/100):null} // 距最优抄底点还需跌多少(%)
+function ibPos(pc){return pc<=20?["超跌区","danger"]:pc<=40?["偏低","warn"]:pc<=60?["中性","neutral"]:pc<=80?["偏高","warn"]:["超买区","danger"]}
+function ibChartOpt(nm,d){
+  const ch=d.chart||{},cur={bias60:d.bias60,bias233:d.bias233,min60:d.min60,max60:d.max60};
+  const c=IB_COL[nm]||"#1663ac";
+  return {animation:false,
+    title:{text:nm+"　最新 MA60乖离 "+ibF(cur.bias60)+" ｜ MA233乖离 "+ibF(cur.bias233)
+             +"　（5年极值 MA60 "+ibF(cur.min60)+"~"+ibF(cur.max60)+"）",
+      left:8,top:4,textStyle:{fontSize:13,color:c,fontWeight:"bold"}},
+    tooltip:TT,
+    legend:{show:true,top:26,textStyle:{fontSize:11},data:["MA60乖离率","MA233乖离率"]},
+    grid:{left:56,right:82,top:60,bottom:34},
+    xAxis:{type:"category",data:ch.dates,axisLabel:{fontSize:10,interval:180},axisLine:{lineStyle:{color:"#c6d0e0"}}},
+    yAxis:{type:"value",scale:true,axisLabel:{fontSize:10,color:"#7a869c",formatter:"{value}%"},splitLine:{lineStyle:{color:"#eef1f6"}}},
+    series:[
+      {name:"MA60乖离率",type:"line",data:ch.b60,symbol:"none",smooth:false,
+       lineStyle:{width:1.8,color:"#d97706"},itemStyle:{color:"#d97706"},
+       markLine:{silent:true,symbol:"none",label:{fontSize:10,color:"#8a94a6"},
+         data:[{yAxis:0,lineStyle:{color:"#94a3b8"}},
+               {type:"max",lineStyle:{color:"#d93026",type:"dashed"},label:{formatter:"60日最高 {c}%"}},
+               {type:"min",lineStyle:{color:"#0e8a54",type:"dashed"},label:{formatter:"60日最低 {c}%"}}]}},
+      {name:"MA233乖离率",type:"line",data:ch.b233,symbol:"none",smooth:false,
+       lineStyle:{width:1.5,color:"#7c3aed",type:"dashed"},itemStyle:{color:"#7c3aed"},
+       markLine:{silent:true,symbol:"none",label:{fontSize:10,color:"#8a94a6"},
+         data:[{type:"max",lineStyle:{color:"#7c3aed",type:"dotted"},label:{formatter:"233日最高 {c}%"}},
+               {type:"min",lineStyle:{color:"#2563eb",type:"dotted"},label:{formatter:"233日最低 {c}%"}}]}}
+    ]};
+}
