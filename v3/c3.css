@@ -1,0 +1,130 @@
+.insight-prose{background:#f8fafd;border:1px solid var(--line2);border-radius:10px;padding:13px 18px;font-size:14.3px;line-height:2.02;color:#33405a;white-space:pre-line;text-align:justify}
+/* 关键支撑/压力双栏 */
+.levels-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+@media(max-width:860px){.levels-grid{grid-template-columns:1fr}}
+.level-col{border-radius:10px;padding:13px 17px;border:1px solid}
+.level-col.lv-sup{background:#f3faf5;border-color:#c9e8d5}
+.level-col.lv-res{background:#fdf3f4;border-color:#f0cfd3}
+.level-col h4{margin:0 0 9px;font-size:14px;font-weight:800;display:flex;align-items:center;gap:7px}
+.level-col.lv-sup h4{color:var(--down)} .level-col.lv-res h4{color:var(--up)}
+.level-col ul{list-style:none;margin:0;padding:0}
+.level-col li{position:relative;padding:7px 0 7px 19px;font-size:13.6px;line-height:1.85;color:#33405a;border-bottom:1px dashed rgba(26,47,90,.07)}
+.level-col li:last-child{border-bottom:none}
+.level-col.lv-sup li::before{content:"▲";position:absolute;left:0;top:8px;color:var(--down);font-size:10px}
+.level-col.lv-res li::before{content:"▼";position:absolute;left:0;top:8px;color:var(--up);font-size:10px}
+/* 风险/未核实逐条卡（放大、疏排） */
+.risk-item{position:relative;background:#fff8f6;border:1px solid #f2d7d1;border-left:4px solid var(--up);border-radius:9px;padding:11px 16px;font-size:14px;line-height:1.98;color:#40322f;text-align:justify}
+.risk-item.hot{background:#fdecea;border-color:#e6b3aa;box-shadow:0 1px 4px rgba(217,48,38,.12)}
+.risk-item .ritag{display:inline-block;background:var(--up);color:#fff;border-radius:6px;padding:1px 9px;font-size:11.5px;font-weight:800;margin-right:8px;vertical-align:1px;white-space:nowrap}
+.risk-item .rin{font-family:var(--mono);font-weight:800;color:var(--up);margin-right:9px}
+.unv-item{position:relative;background:var(--amber-bg);border:1px solid var(--amber-line);border-left:4px solid var(--amber);border-radius:9px;padding:11px 16px;font-size:13.8px;line-height:1.95;color:#5e4a1e;text-align:justify}
+.unv-item .uin{font-family:var(--mono);font-weight:800;color:var(--amber);margin-right:9px}
+
+/* ============== 排版升级 v3（2026-09-15 邱总：字大、疏朗、重点突出、叙事楷体） ============== */
+:root{--font-kai:"KaiTi","STKaiti","楷体","FangSong","STFangsong",serif;}
+/* 全局基础字号与行距整体上调 */
+body{font-size:15px;line-height:1.8;}
+.sec-body{padding:20px 22px;}
+.grid{gap:18px;}
+.panel{padding:16px 18px;}
+/* 标题层级加大、加重 */
+.sec-head{padding:14px 20px;}
+.sec-head h2{font-size:18px;letter-spacing:.5px;}
+.panel h3{font-size:15.5px;line-height:1.5;margin-bottom:10px;color:var(--blue);font-weight:800;}
+.rv-head h3{font-size:16px;}
+/* 表格整体放大、行高拉开（保持无衬线+等宽数字，不用楷体） */
+table{font-size:13.8px;line-height:1.55;}
+th{padding:10px 12px;font-size:13.5px;letter-spacing:.3px;}
+td{padding:9px 12px;line-height:1.8;}
+td .num,th .num,table .t-nums{font-family:var(--mono);}
+/* KPI 数字略加大 */
+.kpi .val{font-size:24px;} .bigkpi .val{font-size:30px;}
+.kpi{padding:13px 15px;}
+/* —— 叙事/文字类：楷体、放大、行距拉开，条目之间留白（PPT 式疏朗） —— */
+.view-text,.home-prose,.rv-prose,.rv-nature,.insight-lead,.insight-sum,.insight-prose,
+.ev-txt,.rv-dtxt,.ib-concl,.home-prose,.logic-list li,.risk-item,.unv-item,.pick-row,
+.verdict p,ul.bul li,.ld-dir .view-text,.rv-side li,.level-col li,.side-col li,
+.manual p,.manual li,.manual div,.prose{
+  font-family:var(--font-kai);font-size:15.6px;line-height:2.05;letter-spacing:.2px;
+}
+.insight-lead,.rv-nature{font-size:16.2px;line-height:2.1;}
+.insight-steps>li{font-family:var(--font-kai);font-size:15.6px;line-height:2.05;margin-bottom:9px;}
+ol.insight-steps{gap:9px;}
+/* 叙事列表/条目间距 */
+.logic-list li,.rv-side li,.level-col li,.side-col li,ul.bul li{margin-bottom:8px;}
+.risk-item{margin-bottom:10px;padding:13px 17px;}
+.unv-item{margin-bottom:10px;padding:13px 17px;}
+.ev-card{padding:14px 16px;margin-bottom:12px;}
+/* 叙事内重点：加粗着墨蓝，新增 .hl 浅蓝底高亮 */
+.view-text b,.view-text strong,.home-prose b,.home-prose strong,.rv-prose b,.rv-prose strong,
+.rv-nature b,.rv-nature strong,.insight-lead b,.insight-lead strong,.insight-sum b,.insight-sum strong,
+.insight-prose b,.insight-prose strong,.ev-txt b,.ev-txt strong,.rv-dtxt b,.rv-dtxt strong,
+.manual b,.manual strong,.ib-concl b,.ib-concl strong,.logic-list b,.logic-list strong,
+.risk-item b,.risk-item strong,.unv-item b,.unv-item strong,.pick-row b,.pick-row strong,
+ul.bul li b,ul.bul li strong,.rv-side b,.rv-side strong,.level-col b,.level-col strong{
+  color:var(--blue);font-weight:800;}
+.hl{background:linear-gradient(transparent 58%,#cfe0fb 58%);padding:0 3px;font-weight:800;color:var(--blue);border-radius:3px;}
+.hl-up{background:linear-gradient(transparent 55%,#f6d4d1 55%);padding:0 3px;font-weight:800;color:var(--up);border-radius:3px;}
+.hl-dn{background:linear-gradient(transparent 55%,#cdeedd 55%);padding:0 3px;font-weight:800;color:var(--down);border-radius:3px;}
+/* 叙事内数字仍等宽、不套楷体，避免楷体数字不齐 */
+.view-text .num,.rv-prose .num,.manual .num,.logic-list .num,.insight-lead .num,.ib-concl .num,
+.risk-item .rin,.unv-item .uin{font-family:var(--mono);letter-spacing:0;}
+/* 人工/结论卡片更通透 */
+.manual{padding:14px 18px;line-height:2.05;}
+.ib-concl{padding:11px 15px;margin-top:9px;}
+.insight-block,.insight-lead,.insight-sum,.insight-prose{margin-bottom:11px;}
+/* 折叠事件卡条头更醒目 */
+.ev-head{font-size:15px;padding:11px 15px;}
+/* 小字注释统一上调一档，避免"又小又挤" */
+.note,.sub-note,.footnote,.cap{font-size:13px;line-height:1.85;}
+@media (max-width:900px){
+  body{font-size:14.5px;}
+  .view-text,.home-prose,.rv-prose,.manual p,.manual li,.logic-list li{font-size:15px;line-height:1.98;}
+  table{font-size:13.2px;}
+}
+/* ============== 9-15 新模块：60日新高 / 5日轮动 / 避雷针（2026-09-15移植+宝石蓝美化） ============== */
+.nm-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:11px}
+.nm-head h3{margin:0}
+.nm-sub{font-size:11.8px;color:var(--ink3);line-height:1.6}
+.nh-grid{display:grid;grid-template-columns:minmax(0,0.92fr) minmax(0,1.28fr);gap:14px;align-items:start}
+.nh-wrap{max-height:560px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.nh-wrap table{margin:0}
+tr.nh-brow{cursor:pointer;transition:background .12s}
+tr.nh-brow:hover td{background:#f2f7ff}
+tr.nh-gh td{cursor:pointer;background:linear-gradient(90deg,#eef3fb,#f7faff);font-weight:700;color:var(--blue);user-select:none}
+tr.nh-gh .arw{display:inline-block;transition:transform .16s;margin-right:6px;color:var(--blue2)}
+tr.nh-gh.open .arw{transform:rotate(90deg)}
+tr.nh-irow.rest{display:none}
+tr.nh-irow td{font-size:12.6px}
+.nh-concept{color:var(--ink3);font-size:11.3px;white-space:normal;line-height:1.5;min-width:120px}
+/* 跨表/跨列蓝色高亮（邱总指定 #dbeafe，!important 压过 td 底色） */
+.hl td{background:#dbeafe !important}
+tr[data-g].hl td,tr[data-b].hl td{color:#1d4ed8;font-weight:700}
+.r5-wrap{display:flex;gap:11px;overflow-x:auto;padding-bottom:8px;align-items:flex-start}
+.r5-col{flex:0 0 218px;border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden}
+.r5-col .r5-day{background:var(--blue);color:#fff;font-weight:700;font-size:12.6px;padding:7px 11px;display:flex;justify-content:space-between;align-items:center}
+.r5-col .r5-day .r5-tot{font-family:var(--mono);font-weight:600;font-size:11px;opacity:.85}
+.r5-col table{margin:0}
+.r5-col td{padding:6px 9px;font-size:12.3px}
+tr.r5-row{cursor:pointer}
+tr.r5-row:hover td{background:#f2f7ff}
+.r5-col .r5-name{white-space:nowrap}
+/* 避雷针 */
+.lz-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+.lz-card{border:1px solid #f0d4d4;border-radius:11px;overflow:hidden;background:#fff}
+.lz-card.full{grid-column:1/-1}
+.lz-card .lz-t{background:linear-gradient(135deg,#b91c1c,#7f1d1d);color:#fff;font-weight:700;font-size:13.5px;padding:10px 14px;display:flex;gap:9px;align-items:center}
+.lz-card .lz-t .lz-ic{font-family:var(--mono)}
+.lz-card .lz-b{padding:11px 14px}
+.lz-card table th{background:#fdf2f2 !important;color:#7f1d1d}
+td.lz-red{color:#c02b22;font-weight:800}
+.lz-news{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.lz-news li{border-left:3px solid #dc2626;background:#fef7f7;border-radius:0 8px 8px 0;padding:8px 12px;font-size:12.8px;line-height:1.75;color:#3a2b2b}
+.lz-news li b{color:#b91c1c}
+.lz-news.macro li{border-left-color:#d97706;background:#fffaf2}
+.lz-news.macro li b{color:#b45309}
+.lz-abn{display:flex;flex-direction:column;gap:8px}
+.lz-abn .abn{border:1px solid #f3d6d6;border-radius:9px;padding:9px 12px;font-size:12.8px;line-height:1.7;background:#fff}
+.lz-abn .abn b{color:#b91c1c}
+.lz-abn .abn .code{font-family:var(--mono);color:var(--ink3);font-size:11.5px;margin-left:7px;font-weight:600}
+@media(max-width:1100px){.nh-grid,.lz-grid{grid-template-columns:1fr}}
