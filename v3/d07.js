@@ -1,0 +1,3 @@
+(function(){var L=window.LATEST;if(!L)return;
+L["index_amount"]=[{"name":"上证指数","amount_yi":7792.81,"amount_mom_pct":-18.7,"chg_pct":-0.07},{"name":"深证成指","amount_yi":8498.94,"amount_mom_pct":-16.2,"chg_pct":-0.64},{"name":"创业板指","amount_yi":4006.76,"amount_mom_pct":-13.4,"chg_pct":-1.1},{"name":"科创50","amount_yi":610.08,"amount_mom_pct":-21.7,"chg_pct":-1.62},{"name":"沪深300","amount_yi":3986.85,"amount_mom_pct":-23.7,"chg_pct":-0.67},{"name":"北证50","amount_yi":null,"amount_mom_pct":null,"chg_pct":-0.15}];
+})();
