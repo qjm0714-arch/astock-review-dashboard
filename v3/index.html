@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A股每日复盘工作台 2.0</title>
+<link rel="stylesheet" href="c1.css">
+<link rel="stylesheet" href="c2.css">
+<link rel="stylesheet" href="c3.css">
+
+</head>
+<body>
+
+<!-- ================= 顶栏 ================= -->
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brand">
+      <h1>A股每日复盘工作台 2.0</h1>
+      <span class="sub">数据自动更新 · 11页全维复盘 · 图表现场渲染 · 人工复核润色</span>
+    </div>
+    <div class="top-controls">
+      <span class="src-state" id="srcState"></span>
+      <select class="date-select" id="dateSelect" title="切换历史交易日"></select>
+      <button class="btn btn-ghost" id="loadFileBtn" title="手动选择 report JSON">导入JSON</button>
+      <input type="file" id="fileInput" accept=".json" style="display:none">
+      <button class="btn btn-ghost" id="reviewBtn">复核模式</button>
+      <button class="btn btn-gold" id="exportMdBtn">导出飞书MD</button>
+      <button class="btn btn-gold" id="exportTxtBtn">公众号纯文本</button>
+      <button class="btn btn-gold" id="exportHtmlBtn">精美HTML快照</button>
+    </div>
+  </div>
+</header>
+
+<!-- ================= 11页签 ================= -->
+<nav class="tabbar"><div class="tabbar-in" id="tabBar"></div></nav>
+
+<div class="wrap">
+  <main class="main">
+    <div class="loading" id="loading">正在加载数据，请确认已运行 update_daily.py 生成 data/latest.js ……</div>
+    <div id="content" style="display:none"></div>
+  </main>
+</div>
+
+<div class="footer" id="footer"></div>
+<div class="toast" id="toast"></div>
+<div class="modal-mask" id="modalMask">
+  <div class="modal">
+    <div class="modal-head"><h3 id="modalTitle">导出内容（可全选复制）</h3><button id="modalCopy">复制</button><button id="modalClose" style="margin-left:8px">关闭</button></div>
+    <div class="modal-body"><textarea id="modalText"></textarea></div>
+  </div>
+</div>
+
+<!-- ECharts: 本地优先(离线可用), 失败则 jsDelivr 锁定版本+SRI 兜底 -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js" integrity="sha384-pPi0zxBAoDu6+JXW/C68UZLvBUUtU+7zonhif43rqj7pxsGyqyqzcian2Rj37Rss" crossorigin="anonymous"></script>
+<script src="app.js"></script>
+<script src="app2.js"></script>
+<script src="app3.js"></script>
+<script src="app4.js"></script>
+<script src="app5.js"></script>
+<script src="app6.js"></script>
+<script src="app7.js"></script>
+<script src="app8.js"></script>
+<script src="app9.js"></script>
+<script src="app10.js"></script>
+<script src="app11.js"></script>
+<script src="app12.js"></script>
+<script src="app13.js"></script>
+<script src="charts.js"></script>
+<script src="charts2.js"></script>
+<script src="charts3.js"></script>
+<script>
+window.DATES=["2026-09-04", "2026-09-07", "2026-09-08", "2026-09-09", "2026-09-10", "2026-09-11"];
+</script>
+<script src="latest.js"></script>
+<script src="d01.js"></script>
+<script src="d02.js"></script>
+<script src="d03.js"></script>
+<script src="d04.js"></script>
+<script src="d05.js"></script>
+<script src="d06.js"></script>
+<script src="d07.js"></script>
+<script src="d08.js"></script>
+<script src="d09.js"></script>
+<script src="d10.js"></script>
+<script src="d11.js"></script>
+<script src="d12.js"></script>
+<script src="d13.js"></script>
+<script src="d14.js"></script>
+<script src="d15.js"></script>
+<script src="d16.js"></script>
+<script src="d17.js"></script>
+<script src="d18.js"></script>
+<script src="d19.js"></script>
+<script src="d20.js"></script>
+<script src="d21.js"></script>
+<script src="d22.js"></script>
+<script src="d23.js"></script>
+<script src="d24.js"></script>
+<script src="d25.js"></script>
+<script src="d26.js"></script>
+<script src="d27.js"></script>
+<script src="d28.js"></script>
+<script src="d29.js"></script>
+<script src="d30.js"></script>
+<script src="d31.js"></script>
+<script src="d32.js"></script>
+<script src="d33.js"></script>
+<script src="d34.js"></script>
+<script src="d35.js"></script>
+<script src="d36.js"></script>
+<script src="d37.js"></script>
+<script src="d38.js"></script>
+<script src="d39.js"></script>
+<script src="d40.js"></script>
+<script src="d41.js"></script>
+<script src="d42.js"></script>
+<script src="d43.js"></script>
+<script src="d44.js"></script>
+</body>
+</html>
