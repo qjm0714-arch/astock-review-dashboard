@@ -1,0 +1,3 @@
+(function(){var L=window.LATEST;if(!L)return;
+L["style"]=L["style"]||{};Object.assign(L["style"],{"quadrants":[{"quad":"大盘价值","index":"上证50","chg":-0.25},{"quad":"大盘均衡","index":"沪深300","chg":-0.67},{"quad":"小盘成长","index":"创业板指","chg":-1.1},{"quad":"硬核科技","index":"科创50","chg":-1.62}],"strongest":{"quad":"大盘价值","index":"上证50","chg":-0.25},"weakest":{"quad":"硬核科技","index":"科创50","chg":-1.62},"scissor_kc_sz50":-1.37});
+})();
